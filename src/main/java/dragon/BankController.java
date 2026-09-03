@@ -28,4 +28,11 @@ public class BankController {
         System.out.println("2. Display balance");
         System.out.println("3. View transaction history");
     }
+
+    private void printTransactionServicesMenu() {
+        System.out.println("What kind of transaction would you like to do?");
+        System.out.println("1. Make a deposit");
+        System.out.println("2. Make a withdrawal");
+        System.out.println("3. Transfer money between accounts");
+    }
 }
