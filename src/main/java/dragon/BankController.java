@@ -43,6 +43,10 @@ public class BankController {
             switch (input) {
                 case "1":
                     // bank transaction
+                    boolean exitTransaction = handleTransactionServices();
+                    if (exitTransaction) {
+                        exit = true;
+                    }
                     break;
                 case "2":
                     boolean userWantsExit = handleBalanceManagement();
@@ -109,5 +113,93 @@ public class BankController {
         System.out.println("1. Make a deposit");
         System.out.println("2. Make a withdrawal");
         System.out.println("3. Transfer money between accounts");
+        System.out.println("4. Exit");
     }
+
+    private boolean handleTransactionServices() {
+        boolean returnToMainMenu = false;
+        boolean quickExit = false;
+
+        while (!returnToMainMenu) {
+            printTransactionServicesMenu();
+            String input = sc.nextLine().trim();
+            switch (input) {
+                case "1":
+                    handleDeposit();
+                    returnToMainMenu = true;
+                    break;
+                case "2":
+                    handleWithdrawal();
+                    returnToMainMenu = true;
+                    break;
+                case "3":
+                    handleTransfer();
+                    returnToMainMenu = true;
+                    break;
+                case "4":
+                    System.out.println("Exiting...");
+                    quickExit = true;
+                    returnToMainMenu = true;
+                    break;
+                default:
+                    System.out.println("Invalid input. please try again.");
+                    break;
+            }
+        }
+        return quickExit;
+    }
+
+    private void handleWithdrawal() {
+        // TODO: Print user's accounts
+
+        System.out.print("Select account: ");
+        String account = sc.nextLine().trim();
+        // TODO: Validate account input, check if user input matches an account
+
+        System.out.print("Enter withdrawal amount: ");
+        float withdrawAmount = sc.nextFloat();
+        // TODO: Validate account has sufficient money, subtract amount from account balance
+
+        System.out.println("You withdrew $" + withdrawAmount + " from account " + account);
+    }
+
+    private void handleDeposit() {
+        // TODO: Print user accounts
+
+        System.out.print("Select account: ");
+        String account = sc.nextLine().trim();
+        // TODO: Validate account input, check if user input matches an account
+
+        System.out.print("Enter deposit amount:");
+        float depositAmount = sc.nextFloat();
+        // TODO: Add amount to account balance
+
+        System.out.println("You deposited $" + depositAmount + " to account " + account);
+    }
+
+    private void handleTransfer() {
+        // TODO: Print user accounts
+        System.out.print("Select sending account: ");
+        String sendingAcc = sc.nextLine().trim();
+
+        // Print user accounts again
+        System.out.println("Select receiving account: ");
+        String receivingAcc = sc.nextLine().trim();
+
+        /*
+            TODO:  Validate sendingAcc and receivingAcc:
+                - Check if both match user accounts
+                - Check if sendingAcc != receivingAcc
+                - Check if sendingAcc.balance > $0
+         */
+
+        System.out.print("Enter amount to be transferred: ");
+        float transferAmount = sc.nextFloat();
+        // TODO: Check if sendingAcc.balance >= transferAmount, ask user to enter other amount
+
+        System.out.println("Transferred $" + transferAmount + " from " +
+                "account " + sendingAcc + " to account " + receivingAcc);
+    }
+
+
 }
