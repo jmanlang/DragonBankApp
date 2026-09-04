@@ -37,7 +37,7 @@ public class BankController {
     private void handleServicesMenu() {
         boolean exit = false;
 
-        do {
+        while (!exit) {
             printServicesMenu();
             String input = sc.nextLine().trim();
             switch (input) {
@@ -62,52 +62,45 @@ public class BankController {
                     break;
             }
         }
-        while (!exit);
     }
 
     private void printBalanceManagementMenu() {
         // included both checking and savings, but can rewrite for a singular balance
         System.out.println("Select an option:");
-        System.out.println("1. Check the balance in your savings account");
-        System.out.println("2. Check the balance in your checking account");
-        System.out.println("3. Return to main menu");
-        System.out.println("4. Exit");
+        System.out.println("1. Check the balance in your savings account.");
+        System.out.println("2. Check the balance in your checking account.");
+        System.out.println("3. Return to main menu.");
+        System.out.println("4. Exit.");
     }
 
     private boolean handleBalanceManagement() {
         boolean returnToMainMenu = false;
         boolean quickExit = false;
 
-        do {
+        while (!returnToMainMenu) {
             printBalanceManagementMenu();
             String input = sc.nextLine().trim();
             switch (input) {
                 case "1":
-                    // system call to business layer
                     System.out.println("Savings account: $500");
                     break;
                 case "2":
-                    // system call to business layer
                     System.out.println("Checking account: $1000");
                     break;
                 case "3":
-                    // navigates back to main menu
                     System.out.println("Returning to main menu...");
                     returnToMainMenu = true;
                     break;
                 case "4":
-                    // quick exit
                     System.out.println("Exiting...");
                     quickExit = true;
                     returnToMainMenu = true;
                     break;
                 default:
-                    //
-                    System.out.println("Invalid input. please try again");
+                    System.out.println("Invalid input. please try again.");
                     break;
             }
         }
-        while (!returnToMainMenu);
         return quickExit;
     }
 }
