@@ -43,10 +43,7 @@ public class BankController {
             switch (input) {
                 case "1":
                     // bank transaction
-                    boolean exitTransaction = handleTransactionServices();
-                    if (exitTransaction) {
-                        exit = true;
-                    }
+                    handleTransactionServices();
                     break;
                 case "2":
                     boolean userWantsExit = handleBalanceManagement();
@@ -113,12 +110,12 @@ public class BankController {
         System.out.println("1. Make a deposit");
         System.out.println("2. Make a withdrawal");
         System.out.println("3. Transfer money between accounts");
-        System.out.println("4. Exit");
+        System.out.println("4. Return to main menu");
     }
 
-    private boolean handleTransactionServices() {
+    private void handleTransactionServices() {
         boolean returnToMainMenu = false;
-        boolean quickExit = false;
+
 
         while (!returnToMainMenu) {
             printTransactionServicesMenu();
@@ -126,19 +123,15 @@ public class BankController {
             switch (input) {
                 case "1":
                     handleDeposit();
-                    returnToMainMenu = true;
                     break;
                 case "2":
                     handleWithdrawal();
-                    returnToMainMenu = true;
                     break;
                 case "3":
                     handleTransfer();
-                    returnToMainMenu = true;
                     break;
                 case "4":
-                    System.out.println("Exiting...");
-                    quickExit = true;
+                    System.out.println("Returning to main menu...");
                     returnToMainMenu = true;
                     break;
                 default:
@@ -146,7 +139,6 @@ public class BankController {
                     break;
             }
         }
-        return quickExit;
     }
 
     private void handleWithdrawal() {
@@ -158,6 +150,7 @@ public class BankController {
 
         System.out.print("Enter withdrawal amount: ");
         float withdrawAmount = sc.nextFloat();
+        sc.nextLine(); // consume leftover newline left by nextFloat()
         // TODO: Validate account has sufficient money, subtract amount from account balance
 
         System.out.println("You withdrew $" + withdrawAmount + " from account " + account);
@@ -172,6 +165,7 @@ public class BankController {
 
         System.out.print("Enter deposit amount:");
         float depositAmount = sc.nextFloat();
+        sc.nextLine(); // consume leftover newline left by nextFloat()
         // TODO: Add amount to account balance
 
         System.out.println("You deposited $" + depositAmount + " to account " + account);
@@ -195,6 +189,7 @@ public class BankController {
 
         System.out.print("Enter amount to be transferred: ");
         float transferAmount = sc.nextFloat();
+        sc.nextLine(); // consume leftover newline left by nextFloat()
         // TODO: Check if sendingAcc.balance >= transferAmount, ask user to enter other amount
 
         System.out.println("Transferred $" + transferAmount + " from " +
