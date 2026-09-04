@@ -13,17 +13,58 @@ public class BankController {
 
     public void init() {
         if (!isUserAuthenticated) {
-            printAuthMenu();
+            userAuthenticationHandler();
         }
         if (isUserAuthenticated) {
             handleServicesMenu();
         }
     }
+    private void userAuthenticationHandler() {
+        while (!isUserAuthenticated) {
+            printAuthMenu();
+            String input = sc.nextLine().trim();
 
+            switch (input) {
+                case "1":
+                    handleLogin();
+                    break;
+                case "2":
+                    handleRegistration();
+                    handleLogin();
+                    break;
+                default:
+                    System.out.println("Invalid input. Please choose again.");
+                    break;
+            }
+        }
+    }
     private void printAuthMenu() {
-        System.out.println("Login or Register:");
+        System.out.println("Welcome to the Bank of CLI\n");
+        System.out.println("Would you like to login or register?:");
         System.out.println("1. Login");
         System.out.println("2. Register");
+    }
+
+    private void handleRegistration() {
+        // Will add logging at a later date
+        System.out.println("Account Registration");
+        System.out.print("Enter a user ID: ");
+        sc.nextLine();
+        System.out.print("Enter a PIN: ");
+        sc.nextLine();
+        System.out.println("Registration complete. Please log in.");
+    }
+
+    private void handleLogin() {
+        // Will add logging at a later date
+        System.out.println("Account Login");
+        System.out.print("Enter your user ID: ");
+        sc.nextLine();
+        System.out.print("Enter your PIN: ");
+        sc.nextLine();
+
+        isUserAuthenticated = true;
+        System.out.println("Login successful.");
     }
 
     private void printServicesMenu() {
@@ -33,6 +74,7 @@ public class BankController {
         System.out.println("3. View transaction history");
         System.out.println("4. Exit");
     }
+
 
     private void handleServicesMenu() {
         boolean exit = false;
