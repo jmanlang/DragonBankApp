@@ -96,6 +96,7 @@ public class BankController {
                     break;
                 case "3":
                     // transaction history
+                    exit = handleHistoryManagementMenu();
                     break;
                 case "4":
                     System.out.println("Exiting...");
@@ -209,11 +210,4 @@ public class BankController {
         //print transactions from  start date to  end date
         System.out.println("Printing transactions from " + startDateString + " to " + endDateString);
     }
-
-    //    public static void main(String[] args){
-//        BankController myBank = new BankController();
-//        myBank.handleHistoryManagementMenu();
-//    }
-
-
 }
