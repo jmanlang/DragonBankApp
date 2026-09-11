@@ -1,28 +1,31 @@
 package dragon;
 
+import dragon.service.AuthService;
+
 import java.util.Scanner;
 import java.time.format.DateTimeParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public class BankController {
-    private boolean isUserAuthenticated;
+    private final AuthService authService;
+
     private final Scanner sc = new Scanner(System.in);
 
-    public BankController() {
-        this.isUserAuthenticated = false;
+    public BankController(AuthService authService) {
+        this.authService = authService;
     }
 
     public void init() {
-        if (!isUserAuthenticated) {
+        if (!isUserAuthenticated()) {
             userAuthenticationHandler();
         }
-        if (isUserAuthenticated) {
+        if (isUserAuthenticated()) {
             handleServicesMenu();
         }
     }
     private void userAuthenticationHandler() {
-        while (!isUserAuthenticated) {
+        while (!isUserAuthenticated()) {
             printAuthMenu();
             String input = sc.nextLine().trim();
 
@@ -50,23 +53,30 @@ public class BankController {
     private void handleRegistration() {
         // Will add logging at a later date
         System.out.println("Account Registration");
-        System.out.print("Enter a user ID: ");
-        sc.nextLine();
+        System.out.print("Enter an account ID: ");
+        String accountId = sc.nextLine();
         System.out.print("Enter a PIN: ");
-        sc.nextLine();
-        System.out.println("Registration complete. Please log in.");
+        String password = sc.nextLine();
+        if (authService.register(accountId, password)) {
+            System.out.println("Registration complete. Please log in.");
+        } else {
+            System.out.println("Registration failed. Try again.");
+        }
     }
 
     private void handleLogin() {
         // Will add logging at a later date
         System.out.println("Account Login");
-        System.out.print("Enter your user ID: ");
-        sc.nextLine();
-        System.out.print("Enter your PIN: ");
-        sc.nextLine();
+        System.out.print("Enter an account ID: ");
+        String accountId = sc.nextLine();
+        System.out.print("Enter a PIN: ");
+        String password = sc.nextLine();
 
-        isUserAuthenticated = true;
-        System.out.println("Login successful.");
+        if (authService.login(accountId, password)) {
+            System.out.println("Login successful.");
+        } else {
+            System.out.println("Login failed. Try again.");
+        }
     }
 
     private void printServicesMenu() {
@@ -303,5 +313,7 @@ public class BankController {
                 "account " + sendingAcc + " to account " + receivingAcc);
     }
 
-
+    private boolean isUserAuthenticated() {
+        return AuthenticatedAccountContext.getAuthenticatedUserId() != null;
+    }
 }
