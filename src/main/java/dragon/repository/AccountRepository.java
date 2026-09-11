@@ -2,7 +2,7 @@ package dragon.repository;
 
 import dragon.entity.Account;
 import dragon.entity.User;
-
+// Note: Bodies of functions are not relevant right now, they will be jdbc calls.
 public class AccountRepository {
     // Does a bank account the id exist? If so, return the Account object, else return null
     public Account findByAccountId(String accountId) {
