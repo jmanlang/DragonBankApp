@@ -52,15 +52,19 @@ public class BankController {
 
     private void handleRegistration() {
         // Will add logging at a later date
-        System.out.println("Account Registration");
-        System.out.print("Enter an account ID: ");
-        String accountId = sc.nextLine();
-        System.out.print("Enter a PIN: ");
-        String password = sc.nextLine();
-        if (authService.register(accountId, password)) {
-            System.out.println("Registration complete. Please log in.");
-        } else {
-            System.out.println("Registration failed. Try again.");
+        boolean registerSuccess = false;
+        while (!registerSuccess) {
+            System.out.println("Account Registration");
+            System.out.print("Enter an account ID: ");
+            String accountId = sc.nextLine();
+            System.out.print("Enter a PIN: ");
+            String password = sc.nextLine();
+            if (authService.register(accountId, password)) {
+                System.out.println("Registration complete. Please log in.");
+                registerSuccess = true;
+            } else {
+                System.out.println("Registration failed. Try again.");
+            }
         }
     }
 
