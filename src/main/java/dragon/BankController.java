@@ -1,6 +1,8 @@
 package dragon;
 
+import dragon.repository.AccountRepository;
 import dragon.service.AuthService;
+import dragon.service.TransactionService;
 
 import java.util.Scanner;
 import java.time.format.DateTimeParseException;
@@ -9,11 +11,17 @@ import java.time.format.DateTimeFormatter;
 
 public class BankController {
     private final AuthService authService;
+    private final AccountRepository accountRepository;
 
     private final Scanner sc = new Scanner(System.in);
 
-    public BankController(AuthService authService) {
+    public BankController(AuthService authService, AccountRepository accountRepository) {
         this.authService = authService;
+        this.accountRepository = accountRepository;
+    }
+
+    private TransactionService getTransactionService() {
+        return new TransactionService(AuthenticatedAccountContext.getAuthenticatedUserId(), accountRepository);
     }
 
     public void init() {
@@ -267,14 +275,16 @@ public class BankController {
 
         System.out.print("Select account: ");
         String account = sc.nextLine().trim();
-        // TODO: Validate account input, check if user input matches an account
 
         System.out.print("Enter withdrawal amount: ");
         float withdrawAmount = sc.nextFloat();
         sc.nextLine(); // consume leftover newline left by nextFloat()
-        // TODO: Validate account has sufficient money, subtract amount from account balance
 
-        System.out.println("You withdrew $" + withdrawAmount + " from account " + account);
+        if (getTransactionService().withdraw(account, withdrawAmount)) {
+            System.out.println("You withdrew $" + withdrawAmount + " from account " + account);
+        } else {
+            System.out.println("Withdrawal failed. Please check the account and amount and try again.");
+        }
     }
 
     private void handleDeposit() {
@@ -282,14 +292,16 @@ public class BankController {
 
         System.out.print("Select account: ");
         String account = sc.nextLine().trim();
-        // TODO: Validate account input, check if user input matches an account
 
         System.out.print("Enter deposit amount:");
         float depositAmount = sc.nextFloat();
         sc.nextLine(); // consume leftover newline left by nextFloat()
-        // TODO: Add amount to account balance
 
-        System.out.println("You deposited $" + depositAmount + " to account " + account);
+        if (getTransactionService().deposit(account, depositAmount)) {
+            System.out.println("You deposited $" + depositAmount + " to account " + account);
+        } else {
+            System.out.println("Deposit failed. Please check the account and amount and try again.");
+        }
     }
 
     private void handleTransfer() {
@@ -301,20 +313,16 @@ public class BankController {
         System.out.println("Select receiving account: ");
         String receivingAcc = sc.nextLine().trim();
 
-        /*
-            TODO:  Validate sendingAcc and receivingAcc:
-                - Check if both match user accounts
-                - Check if sendingAcc != receivingAcc
-                - Check if sendingAcc.balance > $0
-         */
-
         System.out.print("Enter amount to be transferred: ");
         float transferAmount = sc.nextFloat();
         sc.nextLine(); // consume leftover newline left by nextFloat()
-        // TODO: Check if sendingAcc.balance >= transferAmount, ask user to enter other amount
 
-        System.out.println("Transferred $" + transferAmount + " from " +
-                "account " + sendingAcc + " to account " + receivingAcc);
+        if (getTransactionService().transfer(sendingAcc, receivingAcc, transferAmount)) {
+            System.out.println("Transferred $" + transferAmount + " from " +
+                    "account " + sendingAcc + " to account " + receivingAcc);
+        } else {
+            System.out.println("Transfer failed. Please check the accounts and amount and try again.");
+        }
     }
 
     private boolean isUserAuthenticated() {

@@ -1,7 +1,6 @@
 package dragon.repository;
 
 import dragon.entity.Account;
-import dragon.entity.User;
 
 import java.util.UUID;
 // Note: Bodies of functions are not relevant right now, they will be jdbc calls.
