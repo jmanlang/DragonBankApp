@@ -21,7 +21,7 @@ public class AccountRepository {
     }
 
     // Add a new Account to the db.
-    public void save(User user) {};
+    public void save(Account account) {};
 
     /* Deposits specified amount of money to account. Returns true if successful, false if not
     (Ex: User entered invalid amount)
