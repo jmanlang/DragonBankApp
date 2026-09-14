@@ -5,17 +5,17 @@ import java.util.UUID;
 public class Account {
     private UUID id;
     private String bankAccountId;
-    private String ownerId; // References User.accountId
+    private UUID ownerId; // References User.id
     private float balance;
 
-    public Account(String accountId, String ownerId, float balance) {
+    public Account(String accountId, UUID ownerId, float balance) {
         this.id = UUID.randomUUID();
         this.bankAccountId = accountId;
         this.ownerId = ownerId;
         this.balance = balance;
     }
 
-    public Account(String accountId, String ownerId) {
+    public Account(String accountId, UUID ownerId) {
         this.id = UUID.randomUUID();
         this.bankAccountId = accountId;
         this.ownerId = ownerId;
@@ -30,7 +30,7 @@ public class Account {
         return bankAccountId;
     }
 
-    public String getOwnerId() {
+    public UUID getOwnerId() {
         return ownerId;
     }
 

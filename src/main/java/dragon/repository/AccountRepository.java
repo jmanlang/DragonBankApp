@@ -2,11 +2,13 @@ package dragon.repository;
 
 import dragon.entity.Account;
 import dragon.entity.User;
+
+import java.util.UUID;
 // Note: Bodies of functions are not relevant right now, they will be jdbc calls.
 public class AccountRepository {
     // Does a bank account the id exist? If so, return the Account object, else return null
     public Account findByAccountId(String accountId) {
-        return new Account("123", "123");
+        return new Account("123", UUID.randomUUID());
     }
 
     // Is there a user with the account id?
@@ -15,8 +17,8 @@ public class AccountRepository {
     }
 
     // Return true if bank account belongs to passed in ownerId, false otherwise
-    public boolean checkOwnership(Account account, String ownerId) {
-        String inputOwner = account.getOwnerId();
+    public boolean checkOwnership(Account account, UUID ownerId) {
+        UUID inputOwner = account.getOwnerId();
         return inputOwner.equals(ownerId);
     }
 

@@ -26,9 +26,12 @@ public class TransactionService {
         }
     }
 
-    public void validateBankAccount(String accountId, Account account) throws NoBankAccountException {
-        if (account == null || !accountRepository.checkOwnership(account, userId.toString())) {
-            throw new NoBankAccountException(accountId);
+    public void validateBankAccount(Account account) throws NoBankAccountException {
+        if (account == null) {
+            throw new NoBankAccountException(null);
+        }
+        if (!accountRepository.checkOwnership(account, userId)) {
+            throw new NoBankAccountException(account.getBankAccountId());
         }
     }
 
@@ -44,7 +47,7 @@ public class TransactionService {
 
             validateAmount(amount);
             Account account = accountRepository.findByAccountId(accountId);
-            validateBankAccount(accountId, account);
+            validateBankAccount(account);
 
             float balance = account.getBalance();
             return accountRepository.deposit(account, amount);
@@ -65,7 +68,7 @@ public class TransactionService {
         try {
             validateAmount(amount);
             Account account = accountRepository.findByAccountId(accountId);
-            validateBankAccount(accountId, account);
+            validateBankAccount(account);
             float balance = account.getBalance();
             checkFunds(balance, amount);
 
@@ -93,9 +96,9 @@ public class TransactionService {
         try {
             validateAmount(amount);
             Account fromAccount = accountRepository.findByAccountId(fromAccountId);
-            validateBankAccount(fromAccountId, fromAccount);
+            validateBankAccount(fromAccount);
             Account toAccount = accountRepository.findByAccountId(toAccountId);
-            validateBankAccount(toAccountId, toAccount);
+            validateBankAccount(toAccount);
 
             float fromAccountBalance = fromAccount.getBalance();
             checkFunds(fromAccountBalance, amount);
