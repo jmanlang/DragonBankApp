@@ -1,19 +1,23 @@
 package dragon;
 
 import dragon.service.AuthService;
+import dragon.service.HistoryService;
 
 import java.util.Scanner;
 import java.time.format.DateTimeParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+
 public class BankController {
     private final AuthService authService;
+    private final HistoryService historyService;
 
     private final Scanner sc = new Scanner(System.in);
 
-    public BankController(AuthService authService) {
+    public BankController(AuthService authService, HistoryService historyService) {
         this.authService = authService;
+        this.historyService = historyService;
     }
 
     public void init() {
@@ -185,9 +189,11 @@ public class BankController {
             } else if (choice == 1) {
                 //middle layer finds and prints all checking transactions
                 System.out.println("Printing checking account transactions");
+                this.historyService.getAllHistory();
             } else if (choice == 2) {
                 //middle layer finds and prints all saving transactions
                 System.out.println("Printing savings account transactions");
+                this.historyService.getAllHistory();
             } else if (choice == 3) {
                 chooseDatesMenu();
             } else if (choice == 5){
@@ -202,30 +208,31 @@ public class BankController {
     }
 
 
-    private void chooseDatesMenu() {
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM-dd-yyyy");
+    private boolean chooseDatesMenu() {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         String startDateString, endDateString;
-        System.out.println("Enter start date(MM-DD-YYYY):");
+        System.out.println("Enter start date(YYYY-MM-DD):");
         try {
             startDateString = sc.nextLine();
-            LocalDate startDate = LocalDate.parse(startDateString, dateFormatter);
+            LocalDate.parse(startDateString, dateFormatter);
         } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
-            return;
+            return false;
         }
-        System.out.println("Enter end date(MM-DD-YYYY):");
+        System.out.println("Enter end date(YYYY-MM-DD):");
         try {
             endDateString = sc.nextLine();
-            LocalDate endDate = LocalDate.parse(endDateString, dateFormatter);
+            LocalDate.parse(endDateString, dateFormatter);
         } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
-            return;
+            return false;
         }
 
         //print transactions from  start date to  end date
         System.out.println("Printing transactions from " + startDateString + " to " + endDateString);
+        return this.historyService.getRangeHistory(startDateString, endDateString);
     }
-  
+
     private void printTransactionServicesMenu() {
         System.out.println("What kind of transaction would you like to do?");
         System.out.println("1. Make a deposit");
@@ -236,7 +243,6 @@ public class BankController {
 
     private void handleTransactionServices() {
         boolean returnToMainMenu = false;
-
 
         while (!returnToMainMenu) {
             printTransactionServicesMenu();
