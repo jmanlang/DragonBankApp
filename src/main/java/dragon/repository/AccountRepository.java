@@ -27,6 +27,10 @@ public class AccountRepository {
     (Ex: User entered invalid amount)
     */
 
+    public float getBalance(Account account) {
+        return account.getBalance();
+    }
+
     public boolean deposit(Account account, float amount) {
         if (amount >= 0) {
             float currentBalance = account.getBalance();
