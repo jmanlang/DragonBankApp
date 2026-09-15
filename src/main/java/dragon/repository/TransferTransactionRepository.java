@@ -9,7 +9,7 @@ import java.sql.SQLException;
 
 public class TransferTransactionRepository {
     public void save(Connection connection, TransferTransaction transaction) throws SQLException {
-        String sql = "INSERT INTO TransferTransaction (id, userId, fromAccount, toAccount, amount, date) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO TransferTransaction (id, userId, fromAccount, toAccount, amount, date) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, transaction.getId().toString());

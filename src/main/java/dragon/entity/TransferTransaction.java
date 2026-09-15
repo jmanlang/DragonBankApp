@@ -75,6 +75,6 @@ public class TransferTransaction implements HasDate {
     }
 
     public String toString() {
-        return String.format("Transaction type: Transfer, user ID: %s, from Account ID:%s, from Account ID: %s, amount: %.2f, date:%s", this.userId, this.fromAccount, this.toAccount, this.amount, this.date);
+        return String.format("Transaction type: Transfer,   user ID: %s, from Account ID:%s, to Account ID: %s, amount: %.2f, date:%s", this.userId, this.fromAccount, this.toAccount, this.amount, this.date);
     }
 }

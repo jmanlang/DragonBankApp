@@ -53,6 +53,6 @@ public class DepositTransaction implements HasDate {
     }
 
     public String toString() {
-        return String.format("Transaction type: Deposit, user ID: %s, amount: %.2f, date:%s", this.userId, this.amount, this.date);
+        return String.format("Transaction type: Deposit,    user ID: %s, amount: %.2f, date:%s", this.userId, this.amount, this.date);
     }
 }
