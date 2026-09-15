@@ -2,11 +2,13 @@ package dragon.service;
 
 import dragon.AuthenticatedAccountContext;
 import dragon.database.Database;
-import dragon.entity.Account;
+import dragon.entity.CheckingAccount;
 import dragon.entity.DepositTransaction;
+import dragon.entity.SavingAccount;
 import dragon.entity.TransferTransaction;
 import dragon.entity.WithdrawalTransaction;
-import dragon.repository.AccountRepository;
+import dragon.repository.CheckingAccountRepository;
+import dragon.repository.SavingAccountRepository;
 import dragon.repository.DepositTransactionRepository;
 import dragon.repository.TransferTransactionRepository;
 import dragon.repository.WithdrawalTransactionRepository;
@@ -15,22 +17,24 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.util.UUID;
 
 public class TransactionService {
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
-    private final AccountRepository accountRepository;
+    private final CheckingAccountRepository checkingAccountRepository;
+    private final SavingAccountRepository savingAccountRepository;
     private final DepositTransactionRepository depositTransactionRepository;
     private final WithdrawalTransactionRepository withdrawalTransactionRepository;
     private final TransferTransactionRepository transferTransactionRepository;
 
-    public TransactionService(AccountRepository accountRepository,
+    public TransactionService(CheckingAccountRepository checkingAccountRepository,
+                              SavingAccountRepository savingAccountRepository,
                               DepositTransactionRepository depositTransactionRepository,
                               WithdrawalTransactionRepository withdrawalTransactionRepository,
                               TransferTransactionRepository transferTransactionRepository) {
-        this.accountRepository = accountRepository;
+        this.checkingAccountRepository = checkingAccountRepository;
+        this.savingAccountRepository = savingAccountRepository;
         this.depositTransactionRepository = depositTransactionRepository;
         this.withdrawalTransactionRepository = withdrawalTransactionRepository;
         this.transferTransactionRepository = transferTransactionRepository;
@@ -47,17 +51,17 @@ public class TransactionService {
             connection.setAutoCommit(false);
 
             try {
-                Account account = accountRepository.findByOwnerId(connection, userId);
+                CheckingAccount account = checkingAccountRepository.findByOwnerID(connection, userId);
                 if (account == null) {
                     connection.rollback();
-                    logger.error("Deposit failed because no account was found for user {}.", userId);
+                    logger.error("Deposit failed because no checking account was found for user {}.", userId);
                     return false;
                 }
 
                 double newBalance = account.getBalance() + amount;
-                if (!accountRepository.updateBalance(connection, account.getId(), newBalance)) {
+                if (!checkingAccountRepository.updateCheckingBalance(connection, account, newBalance)) {
                     connection.rollback();
-                    logger.error("Deposit failed because account {} could not be updated.", account.getId());
+                    logger.error("Deposit failed because checking account {} could not be updated.", account.getID());
                     return false;
                 }
 
@@ -88,32 +92,33 @@ public class TransactionService {
             connection.setAutoCommit(false);
 
             try {
-                Account checkingAccount = accountRepository.findByOwnerId(connection, userId);
-                Account savingAccount = accountRepository.findSavingsByOwnerId(connection, userId);
+                CheckingAccount checkingAccount = checkingAccountRepository.findByOwnerID(connection, userId);
+                SavingAccount savingAccount = savingAccountRepository.findByOwnerID(connection, userId);
                 if (checkingAccount == null || savingAccount == null) {
                     connection.rollback();
                     logger.error("Transfer failed because no account was found for user {}.", userId);
                     return false;
                 }
 
-                Account fromAccount = direction == 1 ? checkingAccount : savingAccount;
-                Account toAccount = direction == 1 ? savingAccount : checkingAccount;
+                UUID fromAccountId = direction == 1 ? checkingAccount.getID() : savingAccount.getID();
+                UUID toAccountId = direction == 1 ? savingAccount.getID() : checkingAccount.getID();
 
-                if (fromAccount.getBalance() < amount) {
+                double fromBalance = direction == 1 ? checkingAccount.getBalance() : savingAccount.getBalance();
+                if (fromBalance < amount) {
                     connection.rollback();
                     logger.error("Transfer failed because user {} has insufficient funds.", userId);
                     return false;
                 }
 
-                double newFromBalance = fromAccount.getBalance() - amount;
-                double newToBalance = toAccount.getBalance() + amount;
+                double newFromBalance = fromBalance - amount;
+                double newToBalance = (direction == 1 ? savingAccount.getBalance() : checkingAccount.getBalance()) + amount;
 
                 boolean fromUpdated = direction == 1
-                        ? accountRepository.updateBalance(connection, fromAccount.getId(), newFromBalance)
-                        : accountRepository.updateSavingBalance(connection, fromAccount.getId(), newFromBalance);
+                        ? checkingAccountRepository.updateCheckingBalance(connection, checkingAccount, newFromBalance)
+                        : savingAccountRepository.updateSavingAccountBalance(connection, savingAccount, newFromBalance);
                 boolean toUpdated = direction == 1
-                        ? accountRepository.updateSavingBalance(connection, toAccount.getId(), newToBalance)
-                        : accountRepository.updateBalance(connection, toAccount.getId(), newToBalance);
+                        ? savingAccountRepository.updateSavingAccountBalance(connection, savingAccount, newToBalance)
+                        : checkingAccountRepository.updateCheckingBalance(connection, checkingAccount, newToBalance);
 
                 if (!fromUpdated || !toUpdated) {
                     connection.rollback();
@@ -123,8 +128,8 @@ public class TransactionService {
 
                 transferTransactionRepository.save(connection, new TransferTransaction(
                         userId,
-                        fromAccount.getId(),
-                        toAccount.getId(),
+                        fromAccountId,
+                        toAccountId,
                         amount));
                 connection.commit();
                 logger.info("Transfer of {} completed for user {}.", amount, userId);
@@ -139,6 +144,7 @@ public class TransactionService {
             return false;
         }
     }
+
     public boolean withdraw(double amount) {
         UUID userId = AuthenticatedAccountContext.getAuthenticatedUserId();
 
@@ -150,10 +156,10 @@ public class TransactionService {
             connection.setAutoCommit(false);
 
             try {
-                Account account = accountRepository.findByOwnerId(connection, userId);
+                CheckingAccount account = checkingAccountRepository.findByOwnerID(connection, userId);
                 if (account == null) {
                     connection.rollback();
-                    logger.error("Withdrawal failed because no account was found for user {}.", userId);
+                    logger.error("Withdrawal failed because no checking account was found for user {}.", userId);
                     return false;
                 }
 
@@ -164,9 +170,9 @@ public class TransactionService {
                 }
 
                 double newBalance = account.getBalance() - amount;
-                if (!accountRepository.updateBalance(connection, account.getId(), newBalance)) {
+                if (!checkingAccountRepository.updateCheckingBalance(connection, account, newBalance)) {
                     connection.rollback();
-                    logger.error("Withdrawal failed because account {} could not be updated.", account.getId());
+                    logger.error("Withdrawal failed because checking account {} could not be updated.", account.getID());
                     return false;
                 }
 
