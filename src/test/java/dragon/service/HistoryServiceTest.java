@@ -20,7 +20,7 @@ public class HistoryServiceTest {
 
     @Test
     void test_getAllHistory_positive(){
-        assertEquals(true, historyService.getAllHistory());
+        assertNotNull(historyService.getAllHistory());
     }
 
 
@@ -28,11 +28,12 @@ public class HistoryServiceTest {
 //    @Test
 //    void test_getAllHistory_negative(){
 //        AuthenticatedAccountContext.setAuthenticatedUserId(null);
-//        assertEquals(false, historyService.getAllHistory());
+//        assertFalse(historyService.getAllHistory());
 //    }
 
     @Test
     void test_getRangeHistory_positive() {
+
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         ZoneId zoneId = ZoneId.systemDefault();
 
@@ -42,7 +43,7 @@ public class HistoryServiceTest {
         LocalDate endDate = LocalDate.parse("2016-09-01", dateFormatter);
         Instant endInstant = endDate.atTime(LocalTime.MAX.withNano(0)).atZone(zoneId).toInstant();
 
-        assertEquals(true, historyService.getRangeHistory(startInstant, endInstant));
+        assertNotNull(historyService.getRangeHistory(startInstant, endInstant));
     }
 
     @Test
@@ -56,7 +57,8 @@ public class HistoryServiceTest {
         LocalDate endDate = LocalDate.parse("2016-09-01", dateFormatter);
         Instant endInstant = endDate.atTime(LocalTime.MAX.withNano(0)).atZone(zoneId).toInstant();
 
-        assertEquals(false, historyService.getRangeHistory(startInstant, endInstant));
+
+        assertNull(historyService.getRangeHistory(startInstant, endInstant));
     }
 
 }

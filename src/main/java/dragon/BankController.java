@@ -1,11 +1,14 @@
 package dragon;
 
+import dragon.entity.HasDate;
+import dragon.repository.TransactionRepository;
 import dragon.service.AuthService;
 import dragon.service.HistoryService;
 
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Scanner;
 import java.time.format.DateTimeParseException;
 import java.time.LocalDate;
@@ -101,7 +104,6 @@ public class BankController {
 
     private void handleServicesMenu() {
         boolean exit = false;
-
         while (!exit) {
             printServicesMenu();
             String input = sc.nextLine().trim();
@@ -173,11 +175,10 @@ public class BankController {
 
     private void printHistoryManagementMenu(){
         System.out.println("What transactions would you like to print: ");
-        System.out.println("1. Print all checking account transactions");
-        System.out.println("2. Print all savings account transactions");
-        System.out.println("3. Print all transactions from custom range of dates");
-        System.out.println("4. Return to main menu");
-        System.out.println("5. Exit");
+        System.out.println("1. Print all transactions");
+        System.out.println("2. Print all transactions from custom range of dates");
+        System.out.println("3. Return to main menu");
+        System.out.println("4. Exit");
     }
 
     private boolean handleHistoryManagementMenu(){
@@ -186,20 +187,17 @@ public class BankController {
         while(!returnToMainMenu){
             printHistoryManagementMenu();
             int choice = Integer.parseInt(sc.nextLine());
-            if (choice == 4) {
+            if(choice == 1){
+                printTransactions(this.historyService.getAllHistory());
+            } else if (choice == 2) {
+                List<HasDate> transactions = chooseDatesMenu();
+                if(transactions != null){
+                    printTransactions(transactions);
+                }
+            } else if (choice == 3) {
                 System.out.println("Returning to Main Menu");
                 returnToMainMenu = true;
-            } else if (choice == 1) {
-                //middle layer finds and prints all checking transactions
-                System.out.println("Printing checking account transactions");
-                this.historyService.getAllHistory();
-            } else if (choice == 2) {
-                //middle layer finds and prints all saving transactions
-                System.out.println("Printing savings account transactions");
-                this.historyService.getAllHistory();
-            } else if (choice == 3) {
-                chooseDatesMenu();
-            } else if (choice == 5){
+            } else if (choice == 4){
                 System.out.println("Exiting Bank Application.");
                 returnToMainMenu = true;
                 quickExit = true;
@@ -211,7 +209,7 @@ public class BankController {
     }
 
 
-    private void  chooseDatesMenu() {
+    private List<HasDate> chooseDatesMenu() {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         ZoneId zoneId = ZoneId.systemDefault();
         String startDateString = "", endDateString = " ";
@@ -224,7 +222,7 @@ public class BankController {
             startInstant = startDate.atStartOfDay(zoneId).toInstant();
         } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
-            return;
+            return null;
         }
         System.out.println("Enter end date(YYYY-MM-DD):");
         try {
@@ -234,11 +232,17 @@ public class BankController {
 
         } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
-            return;
+            return null;
         }
         //print transactions from  start date to  end date
         System.out.println("Printing transactions from " + startDateString + " to " + endDateString);
-        this.historyService.getRangeHistory(startInstant, endInstant);
+        return this.historyService.getRangeHistory(startInstant, endInstant);
+    }
+
+    private void printTransactions(List<HasDate> transactions){
+        for(HasDate transaction: transactions){
+            System.out.println(transaction.toString());
+        }
     }
 
     private void printTransactionServicesMenu() {

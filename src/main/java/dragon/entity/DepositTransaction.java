@@ -3,13 +3,56 @@ package dragon.entity;
 import java.time.Instant;
 import java.util.UUID;
 
-public class DepositTransaction extends Transaction{
-    public DepositTransaction(UUID id, UUID userId, UUID accountId, double amount, Instant date) {
-        super(id, userId, accountId, amount, date);
+public class DepositTransaction implements HasDate {
+    private UUID id;
+    private UUID userId;
+    private double amount;
+    private Instant date;
+
+    public DepositTransaction(UUID id, UUID userId, double amount, Instant date) {
+        this.id = id;
+        this.userId = userId;
+        this.amount = amount;
+        this.date = date;
     }
 
+    public DepositTransaction(UUID userId, double amount) {
+        this(UUID.randomUUID(), userId, amount, Instant.now());
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+
+    public Instant getDate() {
+        return date;
+    }
+
+    public void setDate(Instant date) {
+        this.date = date;
+    }
 
     public String toString() {
-        return "Transaction Type: Deposit, " + super.toString();
+        return String.format("Transaction type: Deposit, user ID: %s, amount: %.2f, date:%s", this.userId, this.amount, this.date);
     }
 }
