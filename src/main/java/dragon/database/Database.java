@@ -70,6 +70,15 @@ public class Database {
                         date TEXT NOT NULL
                     )
                     """);
+
+            statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS TransferTransaction (
+                        id TEXT PRIMARY KEY,
+                        userId TEXT NOT NULL REFERENCES User(id),
+                        amount REAL NOT NULL CHECK (amount > 0),
+                        date TEXT NOT NULL
+                    )
+                    """);
         }
     }
 }

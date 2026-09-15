@@ -1,15 +1,11 @@
 package dragon;
 
+
 import dragon.database.Database;
-import dragon.repository.AccountRepository;
-import dragon.repository.DepositTransactionRepository;
-import dragon.repository.CheckingAccountRepository;
-import dragon.repository.SavingAccountRepository;
-import dragon.repository.UserRepository;
-import dragon.repository.WithdrawalTransactionRepository;
+import dragon.repository.*;
 import dragon.service.AuthService;
-import dragon.service.TransactionService;
 import dragon.service.BalanceService;
+import dragon.service.TransactionService;
 
 import java.sql.SQLException;
 import java.sql.Connection;
@@ -28,10 +24,12 @@ public class App {
             AuthService authService = new AuthService(userRepository, accountRepository);
             DepositTransactionRepository depositTransactionRepository = new DepositTransactionRepository();
             WithdrawalTransactionRepository withdrawalTransactionRepository = new WithdrawalTransactionRepository();
+            TransferTransactionRepository transferTransactionRepository = new TransferTransactionRepository();
             TransactionService transactionService = new TransactionService(
                     accountRepository,
                     depositTransactionRepository,
-                    withdrawalTransactionRepository
+                    withdrawalTransactionRepository,
+                    transferTransactionRepository
             );
             BankController app = new BankController(authService, transactionService, balanceService);
             app.init();
