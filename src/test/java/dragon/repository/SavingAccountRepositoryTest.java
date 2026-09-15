@@ -26,12 +26,11 @@ class SavingAccountRepositoryTest {
     @BeforeEach
     void setUp() throws SQLException {
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
-
         try (Statement statement = connection.createStatement()) {
             statement.execute(
-                    "CREATE TABLE SavingAccounts (" +
+                    "CREATE TABLE SavingAccount (" +
                             "id TEXT PRIMARY KEY, " +
-                            "userID TEXT NOT NULL, " +
+                            "owner TEXT NOT NULL, " +
                             "balance REAL NOT NULL DEFAULT 0, " +
                             "interestRate REAL NOT NULL DEFAULT 0)"
             );
@@ -45,22 +44,25 @@ class SavingAccountRepositoryTest {
     }
 
     @Test
-    void findByUserID_returnsNull_whenNoAccountExists() throws SQLException {
+    void findByOwnerID_returnsNull_whenNoAccountExists() throws SQLException {
         UUID randomUserId = UUID.randomUUID();
 
-        SavingAccount result = repository.findByUserID(connection, randomUserId);
+        SavingAccount result = repository.findByOwnerID(connection, randomUserId);
 
         assertNull(result, "Expected no account to be found for a user with no saving account");
     }
 
     @Test
     void createThenFind_roundTripsCorrectly_includingInterestRate() throws SQLException {
+        // This is the case that catches the "interestRate not in SELECT list"
+        // bug found earlier - if that regresses, this test fails with a
+        // SQLException instead of a plain assertion failure.
         UUID accountId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         SavingAccount newAccount = new SavingAccount(accountId, userId, 500.0, 0.025);
 
         repository.createSavingAccount(connection, newAccount);
-        SavingAccount found = repository.findByUserID(connection, userId);
+        SavingAccount found = repository.findByOwnerID(connection, userId);
 
         assertNotNull(found, "Expected to find the account that was just created");
         assertEquals(accountId, found.getID());
@@ -68,6 +70,8 @@ class SavingAccountRepositoryTest {
         assertEquals(500.0, found.getBalance(), 0.0001);
         assertEquals(0.025, found.getInterestRate(), 0.0001);
     }
+
+    // --- createSavingAccount: negative test ---
 
     @Test
     void createSavingAccount_rejectsDuplicateAccountId() throws SQLException {
@@ -82,15 +86,19 @@ class SavingAccountRepositoryTest {
                 "Inserting a second account with the same primary key id should fail");
     }
 
+    // --- updateSavingAccountBalance: positive + negative tests ---
+
     @Test
     void updateSavingAccountBalance_positive_actuallyChangesTheStoredValue() throws SQLException {
+        // Regression test for the earlier bug where the update method bound
+        // the account's stale in-memory balance instead of the new parameter.
         UUID accountId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         SavingAccount account = new SavingAccount(accountId, userId, 100.0, 0.01);
         repository.createSavingAccount(connection, account);
 
         boolean updated = repository.updateSavingAccountBalance(connection, account, 750.0);
-        SavingAccount found = repository.findByUserID(connection, userId);
+        SavingAccount found = repository.findByOwnerID(connection, userId);
 
         assertTrue(updated);
         assertEquals(750.0, found.getBalance(), 0.0001,
@@ -105,12 +113,14 @@ class SavingAccountRepositoryTest {
         repository.createSavingAccount(connection, account);
 
         boolean updated = repository.updateSavingAccountBalance(connection, account, -25.0);
-        SavingAccount found = repository.findByUserID(connection, userId);
+        SavingAccount found = repository.findByOwnerID(connection, userId);
 
         assertFalse(updated, "A negative balance should be rejected, not written");
         assertEquals(100.0, found.getBalance(), 0.0001,
                 "Balance should be unchanged after a rejected update");
     }
+
+    // --- updateSavingAccountInterestRate: positive + negative tests ---
 
     @Test
     void updateSavingAccountInterestRate_positive_actuallyChangesTheStoredValue() throws SQLException {
@@ -120,23 +130,23 @@ class SavingAccountRepositoryTest {
         repository.createSavingAccount(connection, account);
 
         boolean updated = repository.updateSavingAccountInterestRate(connection, account, 0.05);
-        SavingAccount found = repository.findByUserID(connection, userId);
+        SavingAccount found = repository.findByOwnerID(connection, userId);
 
         assertTrue(updated);
         assertEquals(0.05, found.getInterestRate(), 0.0001);
     }
 
     @Test
-    void updateSavingAccountInterestRate_negative_rejectsNullRate() throws SQLException {
+    void updateSavingAccountInterestRate_negative_rejectsNegativeRate() throws SQLException {
         UUID accountId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         SavingAccount account = new SavingAccount(accountId, userId, 100.0, 0.01);
         repository.createSavingAccount(connection, account);
 
-        boolean updated = repository.updateSavingAccountInterestRate(connection, account, null);
-        SavingAccount found = repository.findByUserID(connection, userId);
+        boolean updated = repository.updateSavingAccountInterestRate(connection, account, -0.05);
+        SavingAccount found = repository.findByOwnerID(connection, userId);
 
-        assertFalse(updated, "A null interest rate should be rejected, not written");
+        assertFalse(updated, "A negative interest rate should be rejected, not written");
         assertEquals(0.01, found.getInterestRate(), 0.0001,
                 "Interest rate should be unchanged after a rejected update");
     }

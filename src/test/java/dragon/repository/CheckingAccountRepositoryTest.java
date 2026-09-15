@@ -25,13 +25,14 @@ class CheckingAccountRepositoryTest {
 
     @BeforeEach
     void setUp() throws SQLException {
+        // A brand new in-memory SQLite DB per test, kept alive only while
+        // this Connection stays open.
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
-
         try (Statement statement = connection.createStatement()) {
             statement.execute(
-                    "CREATE TABLE CheckingAccounts (" +
+                    "CREATE TABLE CheckingAccount (" +
                             "id TEXT PRIMARY KEY, " +
-                            "userID TEXT NOT NULL, " +
+                            "owner TEXT NOT NULL, " +
                             "balance REAL NOT NULL DEFAULT 0)"
             );
         }
@@ -44,10 +45,10 @@ class CheckingAccountRepositoryTest {
     }
 
     @Test
-    void findByUserID_returnsNull_whenNoAccountExists() throws SQLException {
+    void findByOwnerID_returnsNull_whenNoAccountExists() throws SQLException {
         UUID randomUserId = UUID.randomUUID();
 
-        CheckingAccount result = repository.findByUserID(connection, randomUserId);
+        CheckingAccount result = repository.findByOwnerID(connection, randomUserId);
 
         assertNull(result, "Expected no account to be found for a user with no checking account");
     }
@@ -59,50 +60,60 @@ class CheckingAccountRepositoryTest {
         CheckingAccount newAccount = new CheckingAccount(accountId, userId, 250.75);
 
         repository.createCheckingAccount(connection, newAccount);
-        CheckingAccount found = repository.findByUserID(connection, userId);
+        CheckingAccount found = repository.findByOwnerID(connection, userId);
 
         assertNotNull(found, "Expected to find the account that was just created");
         assertEquals(accountId, found.getID());
-        assertEquals(userId, found.getUserID());
+        assertEquals(userId, found.getOwnerID());
         assertEquals(250.75, found.getBalance(), 0.0001);
     }
 
     @Test
-    void findByUserID_doesNotMatchDifferentUser() throws SQLException {
+    void findByOwnerID_doesNotMatchDifferentUser() throws SQLException {
         UUID accountId = UUID.randomUUID();
         UUID ownerUserId = UUID.randomUUID();
         UUID otherUserId = UUID.randomUUID();
-
         repository.createCheckingAccount(connection, new CheckingAccount(accountId, ownerUserId, 100.0));
 
-        CheckingAccount result = repository.findByUserID(connection, otherUserId);
+        CheckingAccount result = repository.findByOwnerID(connection, otherUserId);
 
         assertNull(result, "An account belonging to a different user should not be returned");
     }
 
     @Test
     void createCheckingAccount_withZeroBalance_isAllowed() throws SQLException {
+        // Regression test: setBalance() used to reject 0 (<=0 bug found earlier)
         UUID accountId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         CheckingAccount freshAccount = new CheckingAccount(accountId, userId, 0.0);
 
         repository.createCheckingAccount(connection, freshAccount);
-        CheckingAccount found = repository.findByUserID(connection, userId);
+        CheckingAccount found = repository.findByOwnerID(connection, userId);
 
         assertNotNull(found);
         assertEquals(0.0, found.getBalance(), 0.0001);
     }
 
+    // --- createCheckingAccount: negative test ---
+
     @Test
     void createCheckingAccount_rejectsDuplicateAccountId() throws SQLException {
+        // Positive case is createThenFind_roundTripsCorrectly above.
+        // Negative case: the "id" column is the primary key, so inserting
+        // the same account id twice must fail rather than silently
+        // overwrite or create a duplicate row.
         UUID accountId = UUID.randomUUID();
         CheckingAccount first = new CheckingAccount(accountId, UUID.randomUUID(), 100.0);
         CheckingAccount duplicateId = new CheckingAccount(accountId, UUID.randomUUID(), 200.0);
 
         repository.createCheckingAccount(connection, first);
 
-        assertThrows(SQLException.class, () -> repository.createCheckingAccount(connection, duplicateId), "Inserting a second account with the same primary key id should fail");
+        assertThrows(SQLException.class,
+                () -> repository.createCheckingAccount(connection, duplicateId),
+                "Inserting a second account with the same primary key id should fail");
     }
+
+    // --- updateCheckingBalance: positive + negative tests ---
 
     @Test
     void updateCheckingBalance_positive_actuallyChangesTheStoredValue() throws SQLException {
@@ -112,10 +123,11 @@ class CheckingAccountRepositoryTest {
         repository.createCheckingAccount(connection, account);
 
         boolean updated = repository.updateCheckingBalance(connection, account, 450.0);
-        CheckingAccount found = repository.findByUserID(connection, userId);
+        CheckingAccount found = repository.findByOwnerID(connection, userId);
 
         assertTrue(updated, "updateCheckingBalance should report success for a valid update");
-        assertEquals(450.0, found.getBalance(), 0.0001, "Balance should reflect the new value, not the account's stale in-memory balance");
+        assertEquals(450.0, found.getBalance(), 0.0001,
+                "Balance should reflect the new value, not the account's stale in-memory balance");
     }
 
     @Test
@@ -126,21 +138,10 @@ class CheckingAccountRepositoryTest {
         repository.createCheckingAccount(connection, account);
 
         boolean updated = repository.updateCheckingBalance(connection, account, -50.0);
-        CheckingAccount found = repository.findByUserID(connection, userId);
+        CheckingAccount found = repository.findByOwnerID(connection, userId);
 
         assertFalse(updated, "A negative balance should be rejected, not written");
-        assertEquals(100.0, found.getBalance(), 0.0001, "Balance should be unchanged after a rejected update");
-    }
-
-    @Test
-    void updateCheckingBalance_negative_rejectsNullAmount() throws SQLException {
-        UUID accountId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        CheckingAccount account = new CheckingAccount(accountId, userId, 100.0);
-        repository.createCheckingAccount(connection, account);
-
-        boolean updated = repository.updateCheckingBalance(connection, account, null);
-
-        assertFalse(updated, "A null balance should be rejected, not written");
+        assertEquals(100.0, found.getBalance(), 0.0001,
+                "Balance should be unchanged after a rejected update");
     }
 }

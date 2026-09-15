@@ -9,18 +9,16 @@ import dragon.repository.UserRepository;
 import dragon.repository.WithdrawalTransactionRepository;
 import dragon.service.AuthService;
 import dragon.service.TransactionService;
-
-import java.sql.SQLException;
 import dragon.service.BalanceService;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Connection;
 
 public class App {
     public static void main(String[] args) {
         try {
             Database.initialize();
+            Connection connection = Database.getConnection();
 
             UserRepository userRepository = new UserRepository();
             AccountRepository accountRepository = new AccountRepository();
@@ -40,5 +38,5 @@ public class App {
         } catch (SQLException e) {
             System.out.println("The bank could not start because the database is unavailable.");
         }
-        }
+    }
 }

@@ -4,12 +4,12 @@ import java.util.UUID;
 
 public class CheckingAccount {
     private UUID id;
-    private UUID ownerID;
+    private UUID owner;
     private double balance;
 
-    public CheckingAccount(UUID id,  UUID ownerID, double balance) {
-        this.id = id;
-        this.ownerID = ownerID;
+    public CheckingAccount(UUID id,  UUID owner, double balance) {
+        this.setID(id);
+        this.setOwnerID(owner);
         this.setBalance(balance);
     }
 
@@ -18,6 +18,9 @@ public class CheckingAccount {
     }
 
     public void setID(UUID id) {
+        if (id == null) {
+            throw new IllegalArgumentException("id cannot be null");
+        }
         this.id = id;
     }
 
@@ -27,17 +30,20 @@ public class CheckingAccount {
 
     public void setBalance(double balance) {
         if (balance < 0) {
-            throw new IllegalArgumentException("balance cannot be null or negative");
+            throw new IllegalArgumentException("balance cannot be negative");
         }
         this.balance = balance;
     }
 
-    public UUID getUserID() {
-        return ownerID;
+    public UUID getOwnerID() {
+        return owner;
     }
 
-    public void setUserID(UUID ownerID) {
-        this.ownerID = ownerID;
+    public void setOwnerID(UUID ownerID) {
+        if  (ownerID == null) {
+            throw new IllegalArgumentException("ownerID cannot be null");
+        }
+        this.owner = ownerID;
     }
 
 }

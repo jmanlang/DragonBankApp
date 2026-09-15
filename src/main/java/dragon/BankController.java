@@ -174,18 +174,18 @@ public class BankController {
     private void handleCheckingBalance() throws SQLException {
         Double checkingBalance = balanceService.getCheckingAccountBalance();
         if (checkingBalance == null) {
-            System.out.println("Saving balance is null.");
+            System.out.println("Checking balance is null.");
         } else {
-            System.out.println("Saving balance is " + checkingBalance);
+            System.out.println("Checking balance is " + checkingBalance);
         }
     }
 
     private void handleSavingBalance() throws SQLException {
             Double savingBalance = balanceService.getSavingAccountBalance();
             if (savingBalance == null) {
-                System.out.println("Checking balance is null.");
+                System.out.println("Saving balance is null.");
             }  else {
-                System.out.println("Checking balance is " + savingBalance);
+                System.out.println("Saving balance is " + savingBalance);
             }
     }
 

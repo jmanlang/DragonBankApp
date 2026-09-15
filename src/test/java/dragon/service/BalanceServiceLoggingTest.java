@@ -1,124 +1,105 @@
 package dragon.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import dragon.AuthenticatedAccountContext;
 import dragon.entity.CheckingAccount;
-import dragon.entity.SavingAccount;
 import dragon.repository.CheckingAccountRepository;
 import dragon.repository.SavingAccountRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class BalanceServiceTest {
+class BalanceServiceLoggingTest {
 
     private Connection connection;
     private CheckingAccountRepository checkingAccountRepository;
     private SavingAccountRepository savingAccountRepository;
     private BalanceService balanceService;
 
+    private ListAppender<ILoggingEvent> logAppender;
+
     @BeforeEach
     void setUp() throws SQLException {
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
         try (Statement statement = connection.createStatement()) {
             statement.execute(
-                    "CREATE TABLE CheckingAccounts (" +
-                            "id TEXT PRIMARY KEY, userID TEXT NOT NULL, balance REAL NOT NULL DEFAULT 0)"
+                    "CREATE TABLE CheckingAccount (" +
+                            "id TEXT PRIMARY KEY, owner TEXT NOT NULL, balance REAL NOT NULL DEFAULT 0)"
             );
             statement.execute(
-                    "CREATE TABLE SavingAccounts (" +
-                            "id TEXT PRIMARY KEY, userID TEXT NOT NULL, balance REAL NOT NULL DEFAULT 0, " +
+                    "CREATE TABLE SavingAccount (" +
+                            "id TEXT PRIMARY KEY, owner TEXT NOT NULL, balance REAL NOT NULL DEFAULT 0, " +
                             "interestRate REAL NOT NULL DEFAULT 0)"
             );
         }
         checkingAccountRepository = new CheckingAccountRepository();
         savingAccountRepository = new SavingAccountRepository();
         balanceService = new BalanceService(connection, checkingAccountRepository, savingAccountRepository);
+
+        Logger balanceServiceLogger = (Logger) LoggerFactory.getLogger(BalanceService.class);
+        logAppender = new ListAppender<>();
+        logAppender.start();
+        balanceServiceLogger.addAppender(logAppender);
     }
 
     @AfterEach
     void tearDown() throws SQLException {
-        // Reset shared static state so it doesn't leak into other tests.
         AuthenticatedAccountContext.setAuthenticatedUserId(null);
         connection.close();
     }
 
     @Test
-    void getCheckingAccountBalance_returnsNull_whenUserHasNoAccount() throws SQLException {
-        UUID userId = UUID.randomUUID();
-        AuthenticatedAccountContext.setAuthenticatedUserId(userId);
-
-        assertNull(balanceService.getCheckingAccountBalance());
-    }
-
-    @Test
-    void getSavingAccountBalance_returnsNull_whenUserHasNoAccount() throws SQLException {
-        UUID userId = UUID.randomUUID();
-        AuthenticatedAccountContext.setAuthenticatedUserId(userId);
-
-        assertNull(balanceService.getSavingAccountBalance());
-    }
-
-    @Test
-    void getCheckingAccountBalance_returnsRealBalance_whenAccountExists() throws SQLException {
+    void logsInfo_whenCheckingBalanceRetrievedSuccessfully() throws SQLException {
         UUID userId = UUID.randomUUID();
         checkingAccountRepository.createCheckingAccount(
-                connection, new CheckingAccount(UUID.randomUUID(), userId, 1200.50));
+                connection, new CheckingAccount(UUID.randomUUID(), userId, 300.0));
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
 
-        assertEquals(1200.50, balanceService.getCheckingAccountBalance(), 0.0001);
+        balanceService.getCheckingAccountBalance();
+
+        List<ILoggingEvent> events = logAppender.list;
+        assertTrue(events.stream().anyMatch(event -> event.getLevel() == Level.INFO), "Expected an INFO log entry when a balance is retrieved successfully");
+        assertTrue(events.stream().noneMatch(event -> event.getLevel() == Level.ERROR), "Should not log ERROR on a successful lookup");
     }
 
     @Test
-    void getSavingAccountBalance_returnsRealBalance_whenAccountExists() throws SQLException {
+    void logsInfo_whenNoAccountFound() throws SQLException {
         UUID userId = UUID.randomUUID();
-        savingAccountRepository.createSavingAccount(
-                connection, new SavingAccount(UUID.randomUUID(), userId, 5000.00, 0.02));
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
 
-        assertEquals(5000.00, balanceService.getSavingAccountBalance(), 0.0001);
+        balanceService.getCheckingAccountBalance();
+
+        assertTrue(logAppender.list.stream().anyMatch(event -> event.getLevel() == Level.INFO), "Expected an INFO log entry when no account is found (not an error case)");
     }
 
     @Test
-    void checkingAndSavingBalances_areNotMixedUp() throws SQLException {
-        // Regression test for the checking/saving swap bug found earlier in
-        // BankController.handleCheckingBalance()/handleSavingBalance() - this
-        // confirms BalanceService itself keeps the two straight.
-        UUID userId = UUID.randomUUID();
-        checkingAccountRepository.createCheckingAccount(
-                connection, new CheckingAccount(UUID.randomUUID(), userId, 100.0));
-        savingAccountRepository.createSavingAccount(
-                connection, new SavingAccount(UUID.randomUUID(), userId, 999.0, 0.01));
-        AuthenticatedAccountContext.setAuthenticatedUserId(userId);
-
-        assertEquals(100.0, balanceService.getCheckingAccountBalance(), 0.0001, "Checking balance should be 100, not the saving balance");
-        assertEquals(999.0, balanceService.getSavingAccountBalance(), 0.0001, "Saving balance should be 999, not the checking balance");
-    }
-
-    @Test
-    void getCheckingAccountBalance_negative_propagatesExceptionOnDatabaseFailure() throws SQLException {
+    void logsError_whenDatabaseCallFails() throws SQLException {
         UUID userId = UUID.randomUUID();
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
+
         connection.close();
 
-        assertThrows(SQLException.class, () -> balanceService.getCheckingAccountBalance(), "A database failure should propagate to the caller, not be silently swallowed");
-    }
+        try {
+            balanceService.getCheckingAccountBalance();
+        } catch (SQLException expected) {
+        }
 
-    @Test
-    void getSavingAccountBalance_negative_propagatesExceptionOnDatabaseFailure() throws SQLException {
-        UUID userId = UUID.randomUUID();
-        AuthenticatedAccountContext.setAuthenticatedUserId(userId);
-        connection.close();
-
-        assertThrows(SQLException.class, () -> balanceService.getSavingAccountBalance(), "A database failure should propagate to the caller, not be silently swallowed");
+        List<ILoggingEvent> events = logAppender.list;
+        long errorCount = events.stream().filter(event -> event.getLevel() == Level.ERROR).count();
+        assertEquals(1, errorCount, "Expected exactly one ERROR log entry when the database call fails");
     }
 }

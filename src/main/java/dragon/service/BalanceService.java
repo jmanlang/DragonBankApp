@@ -27,34 +27,34 @@ public class BalanceService {
     }
 
     public Double getCheckingAccountBalance() throws SQLException {
-        UUID userID = AuthenticatedAccountContext.getAuthenticatedUserId();
+        UUID owner = AuthenticatedAccountContext.getAuthenticatedUserId();
 
         try {
-            CheckingAccount checkingAccount = checkingAccountRepository.findByUserID(connection, userID);
-            if  (checkingAccount == null) {
-                logger.info("No checking account found for user {}", userID);
+            CheckingAccount checkingAccount = checkingAccountRepository.findByOwnerID(connection, owner);
+            if (checkingAccount == null) {
+                logger.info("No checking account found for user {}", owner);
                 return null;
         }
-        logger.info("Checking balance retrieved successfully for user {}", userID);
+        logger.info("Checking balance retrieved successfully for user {}", owner);
         return checkingAccount.getBalance();
         } catch (SQLException e) {
-            logger.error("SQLException caught while retrieving balance for user {}", userID, e);
+            logger.error("SQLException caught while retrieving balance for user {}", owner, e);
             throw e;
         }
     }
 
     public Double getSavingAccountBalance() throws SQLException {
-        UUID userID = AuthenticatedAccountContext.getAuthenticatedUserId();
+        UUID owner = AuthenticatedAccountContext.getAuthenticatedUserId();
         try {
-            SavingAccount savingAccount = savingAccountRepository.findByUserID(connection, userID);
+            SavingAccount savingAccount = savingAccountRepository.findByOwnerID(connection, owner);
             if (savingAccount == null) {
-                logger.info("No saving account found for user {}", userID);
+                logger.info("No saving account found for user {}", owner);
                 return null;
             }
-            logger.info("Saving balance retrieved successfully for user {}", userID);
+            logger.info("Saving balance retrieved successfully for user {}", owner);
             return savingAccount.getBalance();
         } catch (SQLException e) {
-            logger.error("SQLException caught while retrieving balance for user {}", userID, e);
+            logger.error("SQLException caught while retrieving balance for user {}", owner, e);
             throw e;
         }
     }
