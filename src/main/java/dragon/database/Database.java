@@ -76,7 +76,9 @@ public class Database {
                         id TEXT PRIMARY KEY,
                         userId TEXT NOT NULL REFERENCES User(id),
                         amount REAL NOT NULL CHECK (amount > 0),
-                        date TEXT NOT NULL
+                        date TEXT NOT NULL,
+                        fromAccount TEXT NOT NULL,
+                        toAccount TEXT NOT NULL
                     )
                     """);
         }

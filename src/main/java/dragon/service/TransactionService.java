@@ -120,7 +120,10 @@ public class TransactionService {
                     return false;
                 }
 
-                transferTransactionRepository.save(connection, new TransferTransaction(userId, amount));
+                String fromAccountString = direction == 1 ? "Checking" : "Savings";
+                String toAccountString = direction == 1 ? "Savings" : "Checking";
+                TransferTransaction transaction = new TransferTransaction(userId, amount, fromAccountString, toAccountString);
+                transferTransactionRepository.save(connection, transaction);
                 connection.commit();
                 logger.info("Transfer of {} completed for user {}.", amount, userId);
                 return true;
