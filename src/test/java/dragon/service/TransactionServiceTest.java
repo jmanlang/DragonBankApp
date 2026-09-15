@@ -1,146 +1,84 @@
 package dragon.service;
 
 import dragon.AuthenticatedAccountContext;
+import dragon.database.Database;
 import dragon.entity.Account;
-import dragon.Exceptions.InsufficientFundsException;
-import dragon.Exceptions.InvalidAmountException;
-import dragon.Exceptions.NoBankAccountException;
 import dragon.repository.AccountRepository;
+import dragon.repository.DepositTransactionRepository;
+import dragon.repository.TransferTransactionRepository;
+import dragon.repository.WithdrawalTransactionRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TransactionServiceTest {
-    TransactionService transactionService;
+
+    private static final String TEST_DATABASE_URL = "jdbc:sqlite:file:transactionServiceTest?mode=memory&cache=shared";
+
+    private Connection holdingConnection;
+    private AccountRepository accountRepository;
+    private TransactionService transactionService;
+    private UUID userId;
+
     @BeforeEach
-    void setUp() {
-        AccountRepository accountRepository = new AccountRepository();
-        AuthenticatedAccountContext.setAuthenticatedUserId(UUID.randomUUID());
-        UUID userUUID = AuthenticatedAccountContext.getAuthenticatedUserId();
-        transactionService = new TransactionService(userUUID, accountRepository);
-    }
-
-    @Test
-    void validateBankAccountPositive() {
-        UUID userUUID = AuthenticatedAccountContext.getAuthenticatedUserId();
-        Account a = new Account("1", userUUID);
-        assertDoesNotThrow(() -> {
-            transactionService.validateBankAccount(a);
-
-        });
-    }
-
-    @Test
-    void validateBankAccountNegative() {
-        UUID random = UUID.randomUUID();
-        Account a = new Account("1", random);
-        assertThrows(NoBankAccountException.class, () -> {
-            transactionService.validateBankAccount(a);
-        });
-    }
-
-    @Test
-    void validateAmountPositive() {
-        assertDoesNotThrow(() -> transactionService.validateAmount(50f));
-    }
-
-    @Test
-    void validateAmountNegative() {
-        assertThrows(InvalidAmountException.class, () -> transactionService.validateAmount(-50f));
-    }
-
-    @Test
-    void checkFundsPositive() {
-        assertDoesNotThrow(() -> transactionService.checkFunds(100f, 50f));
-    }
-
-    @Test
-    void checkFundsNegative() {
-        assertThrows(InsufficientFundsException.class, () -> transactionService.checkFunds(20f, 50f));
-    }
-
-    @Test
-    void depositPositive() {
-        UUID userId = UUID.randomUUID();
-        TestAccountRepository accountRepository = new TestAccountRepository();
-        accountRepository.addAccount(new Account("1", userId, 100f));
-        TransactionService service = new TransactionService(userId, accountRepository);
-
-        assertTrue(service.deposit("1", 50f));
-    }
-
-    @Test
-    void depositNegative() {
-        UUID userId = UUID.randomUUID();
-        TestAccountRepository accountRepository = new TestAccountRepository();
-        accountRepository.addAccount(new Account("1", userId, 100f));
-        TransactionService service = new TransactionService(userId, accountRepository);
-
-        assertFalse(service.deposit("1", -50f));
-    }
-
-    @Test
-    void withdrawPositive() {
-        UUID userId = UUID.randomUUID();
-        TestAccountRepository accountRepository = new TestAccountRepository();
-        accountRepository.addAccount(new Account("1", userId, 100f));
-        TransactionService service = new TransactionService(userId, accountRepository);
-
-        assertTrue(service.withdraw("1", 50f));
-    }
-
-    @Test
-    void withdrawNegative() {
-        UUID userId = UUID.randomUUID();
-        TestAccountRepository accountRepository = new TestAccountRepository();
-        accountRepository.addAccount(new Account("1", userId, 20f));
-        TransactionService service = new TransactionService(userId, accountRepository);
-
-        assertFalse(service.withdraw("1", 50f));
-    }
-
-    @Test
-    void transferPositive() {
-        UUID userId = UUID.randomUUID();
-        TestAccountRepository accountRepository = new TestAccountRepository();
-        accountRepository.addAccount(new Account("from", userId, 100f));
-        accountRepository.addAccount(new Account("to", userId, 0f));
-        TransactionService service = new TransactionService(userId, accountRepository);
-
-        assertTrue(service.transfer("from", "to", 50f));
-    }
-
-    @Test
-    void transferNegative() {
-        UUID userId = UUID.randomUUID();
-        TestAccountRepository accountRepository = new TestAccountRepository();
-        accountRepository.addAccount(new Account("from", userId, 20f));
-        accountRepository.addAccount(new Account("to", userId, 0f));
-        TransactionService service = new TransactionService(userId, accountRepository);
-
-        assertFalse(service.transfer("from", "to", 50f));
-    }
-
-    // Returns accounts registered via addAccount instead of the base class's fixed stub
-    private static class TestAccountRepository extends AccountRepository {
-        private final Map<String, Account> accounts = new HashMap<>();
-
-        void addAccount(Account account) {
-            accounts.put(account.getBankAccountId(), account);
+    void setUp() throws SQLException {
+        System.setProperty(Database.DATABASE_URL_PROPERTY, TEST_DATABASE_URL);
+        holdingConnection = DriverManager.getConnection(TEST_DATABASE_URL);
+        try (Statement statement = holdingConnection.createStatement()) {
+            statement.execute("DROP TABLE IF EXISTS CheckingAccount");
+            statement.execute("DROP TABLE IF EXISTS SavingAccount");
+            statement.execute("DROP TABLE IF EXISTS TransferTransaction");
         }
+        Database.initialize();
 
-        @Override
-        public Account findByAccountId(String accountId) {
-            return accounts.get(accountId);
-        }
+        accountRepository = new AccountRepository();
+        transactionService = new TransactionService(
+                accountRepository,
+                new DepositTransactionRepository(),
+                new WithdrawalTransactionRepository(),
+                new TransferTransactionRepository());
+
+        userId = UUID.randomUUID();
+        accountRepository.createCheckingAccount(holdingConnection, new Account(UUID.randomUUID(), userId, 500.0));
+        accountRepository.createSavingAccount(holdingConnection, new Account(UUID.randomUUID(), userId, 0.0));
+        AuthenticatedAccountContext.setAuthenticatedUserId(userId);
     }
 
+    @AfterEach
+    void tearDown() throws SQLException {
+        AuthenticatedAccountContext.setAuthenticatedUserId(null);
+        System.clearProperty(Database.DATABASE_URL_PROPERTY);
+        holdingConnection.close();
+    }
+
+    @Test
+    void transferPositive() throws SQLException {
+        // Valid transfer
+        boolean result = transactionService.transfer(100.0, 1);
+
+        assertTrue(result);
+        assertEquals(400.0, accountRepository.findByOwnerId(holdingConnection, userId).getBalance(), 0.0001);
+        assertEquals(100.0, accountRepository.findSavingsByOwnerId(holdingConnection, userId).getBalance(), 0.0001);
+    }
+
+    @Test
+    void transferNegative() throws SQLException {
+        // Transfer when invalid negative value is entered
+        boolean result = transactionService.transfer(-50.0, 1);
+
+        assertFalse(result);
+        assertEquals(500.0, accountRepository.findByOwnerId(holdingConnection, userId).getBalance(), 0.0001);
+        assertEquals(0.0, accountRepository.findSavingsByOwnerId(holdingConnection, userId).getBalance(), 0.0001);
+    }
 }
+
