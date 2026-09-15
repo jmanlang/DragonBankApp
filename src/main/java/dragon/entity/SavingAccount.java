@@ -4,14 +4,11 @@ import java.util.UUID;
 
 public class SavingAccount {
     private UUID id;
-    private Double interestRate;
-    private Double balance;
+    private double interestRate;
+    private double balance;
     private UUID userID;
 
-    public SavingAccount(UUID id, UUID userID, Double balance, Double interestRate) {
-        if (id == null) {
-            throw new IllegalArgumentException("id cannot be null");
-        }
+    public SavingAccount(UUID id, UUID userID, double balance, double interestRate) {
         this.id = id;
         this.userID = userID;
         this.setBalance(balance);
@@ -26,10 +23,7 @@ public class SavingAccount {
         return interestRate;
     }
 
-    public void setInterestRate(Double interestRate) {
-        if (interestRate == null || interestRate < 0) {
-            throw new IllegalArgumentException("balance cannot be null or negative");
-        }
+    public void setInterestRate(double interestRate) {
         this.interestRate = interestRate;
     }
 
@@ -38,7 +32,7 @@ public class SavingAccount {
     }
 
     public void setBalance(Double balance) {
-        if (balance == null || balance < 0) {
+        if (balance < 0) {
             throw new IllegalArgumentException("balance cannot be null or negative");
         }
         this.balance = balance;
