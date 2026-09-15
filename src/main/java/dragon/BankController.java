@@ -1,7 +1,9 @@
 package dragon;
 
 import dragon.service.AuthService;
+import dragon.service.BalanceService;
 
+import java.sql.SQLException;
 import java.util.Scanner;
 import java.time.format.DateTimeParseException;
 import java.time.LocalDate;
@@ -9,14 +11,16 @@ import java.time.format.DateTimeFormatter;
 
 public class BankController {
     private final AuthService authService;
+    private final BalanceService balanceService;
 
     private final Scanner sc = new Scanner(System.in);
 
-    public BankController(AuthService authService) {
+    public BankController(AuthService authService, BalanceService balanceService) {
         this.authService = authService;
+        this.balanceService = balanceService;
     }
 
-    public void init() {
+    public void init() throws SQLException {
         if (!isUserAuthenticated()) {
             userAuthenticationHandler();
         }
@@ -92,7 +96,7 @@ public class BankController {
     }
 
 
-    private void handleServicesMenu() {
+    private void handleServicesMenu() throws SQLException {
         boolean exit = false;
 
         while (!exit) {
@@ -133,7 +137,7 @@ public class BankController {
         System.out.println("4. Exit.");
     }
 
-    private boolean handleBalanceManagement() {
+    private boolean handleBalanceManagement() throws SQLException {
         boolean returnToMainMenu = false;
         boolean quickExit = false;
 
@@ -142,13 +146,12 @@ public class BankController {
             String input = sc.nextLine().trim();
             switch (input) {
                 case "1":
-                    System.out.println("Savings account: $500");
+                    handleSavingBalance();
                     break;
                 case "2":
-                    System.out.println("Checking account: $1000");
+                    handleCheckingBalance();
                     break;
                 case "3":
-                    System.out.println("Returning to main menu...");
                     returnToMainMenu = true;
                     break;
                 case "4":
@@ -162,6 +165,24 @@ public class BankController {
             }
         }
         return quickExit;
+    }
+
+    private void handleCheckingBalance() throws SQLException {
+        Double checkingBalance = balanceService.getCheckingAccountBalance();
+        if (checkingBalance == null) {
+            System.out.println("Saving balance is null.");
+        } else {
+            System.out.println("Saving balance is " + checkingBalance);
+        }
+    }
+
+    private void handleSavingBalance() throws SQLException {
+            Double savingBalance = balanceService.getSavingAccountBalance();
+            if (savingBalance == null) {
+                System.out.println("Checking balance is null.");
+            }  else {
+                System.out.println("Checking balance is " + savingBalance);
+            }
     }
 
     private void printHistoryManagementMenu(){
@@ -236,8 +257,6 @@ public class BankController {
 
     private void handleTransactionServices() {
         boolean returnToMainMenu = false;
-
-
         while (!returnToMainMenu) {
             printTransactionServicesMenu();
             String input = sc.nextLine().trim();
