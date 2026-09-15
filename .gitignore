@@ -252,3 +252,5 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+.idea/
+*.iml
