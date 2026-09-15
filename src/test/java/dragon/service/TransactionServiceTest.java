@@ -2,9 +2,11 @@ package dragon.service;
 
 import dragon.AuthenticatedAccountContext;
 import dragon.database.Database;
-import dragon.entity.Account;
-import dragon.repository.AccountRepository;
+import dragon.entity.CheckingAccount;
+import dragon.entity.SavingAccount;
+import dragon.repository.CheckingAccountRepository;
 import dragon.repository.DepositTransactionRepository;
+import dragon.repository.SavingAccountRepository;
 import dragon.repository.TransferTransactionRepository;
 import dragon.repository.WithdrawalTransactionRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -26,7 +28,8 @@ public class TransactionServiceTest {
     private static final String TEST_DATABASE_URL = "jdbc:sqlite:file:transactionServiceTest?mode=memory&cache=shared";
 
     private Connection holdingConnection;
-    private AccountRepository accountRepository;
+    private CheckingAccountRepository checkingAccountRepository;
+    private SavingAccountRepository savingAccountRepository;
     private TransactionService transactionService;
     private UUID userId;
 
@@ -41,16 +44,18 @@ public class TransactionServiceTest {
         }
         Database.initialize();
 
-        accountRepository = new AccountRepository();
+        checkingAccountRepository = new CheckingAccountRepository();
+        savingAccountRepository = new SavingAccountRepository();
         transactionService = new TransactionService(
-                accountRepository,
+                checkingAccountRepository,
+                savingAccountRepository,
                 new DepositTransactionRepository(),
                 new WithdrawalTransactionRepository(),
                 new TransferTransactionRepository());
 
         userId = UUID.randomUUID();
-        accountRepository.createCheckingAccount(holdingConnection, new Account(UUID.randomUUID(), userId, 500.0));
-        accountRepository.createSavingAccount(holdingConnection, new Account(UUID.randomUUID(), userId, 0.0));
+        checkingAccountRepository.createCheckingAccount(holdingConnection, new CheckingAccount(UUID.randomUUID(), userId, 500.0));
+        savingAccountRepository.createSavingAccount(holdingConnection, new SavingAccount(UUID.randomUUID(), userId, 0.0, 0.0));
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
     }
 
@@ -67,8 +72,8 @@ public class TransactionServiceTest {
         boolean result = transactionService.transfer(100.0, 1);
 
         assertTrue(result);
-        assertEquals(400.0, accountRepository.findByOwnerId(holdingConnection, userId).getBalance(), 0.0001);
-        assertEquals(100.0, accountRepository.findSavingsByOwnerId(holdingConnection, userId).getBalance(), 0.0001);
+        assertEquals(400.0, checkingAccountRepository.findByOwnerID(holdingConnection, userId).getBalance(), 0.0001);
+        assertEquals(100.0, savingAccountRepository.findByOwnerID(holdingConnection, userId).getBalance(), 0.0001);
     }
 
     @Test
@@ -77,8 +82,11 @@ public class TransactionServiceTest {
         boolean result = transactionService.transfer(-50.0, 1);
 
         assertFalse(result);
-        assertEquals(500.0, accountRepository.findByOwnerId(holdingConnection, userId).getBalance(), 0.0001);
-        assertEquals(0.0, accountRepository.findSavingsByOwnerId(holdingConnection, userId).getBalance(), 0.0001);
+        assertEquals(500.0, checkingAccountRepository.findByOwnerID(holdingConnection, userId).getBalance(), 0.0001);
+        assertEquals(0.0, savingAccountRepository.findByOwnerID(holdingConnection, userId).getBalance(), 0.0001);
     }
+
+    // TODO: Write negative test for transferring with insufficient funds
 }
+
 
