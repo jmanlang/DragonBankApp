@@ -4,15 +4,18 @@ import dragon.AuthenticatedAccountContext;
 import dragon.database.Database;
 import dragon.entity.Account;
 import dragon.entity.DepositTransaction;
+import dragon.entity.TransferTransaction;
 import dragon.entity.WithdrawalTransaction;
 import dragon.repository.AccountRepository;
 import dragon.repository.DepositTransactionRepository;
+import dragon.repository.TransferTransactionRepository;
 import dragon.repository.WithdrawalTransactionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.UUID;
 
 public class TransactionService {
@@ -21,13 +24,16 @@ public class TransactionService {
     private final AccountRepository accountRepository;
     private final DepositTransactionRepository depositTransactionRepository;
     private final WithdrawalTransactionRepository withdrawalTransactionRepository;
+    private final TransferTransactionRepository transferTransactionRepository;
 
     public TransactionService(AccountRepository accountRepository,
                               DepositTransactionRepository depositTransactionRepository,
-                              WithdrawalTransactionRepository withdrawalTransactionRepository) {
+                              WithdrawalTransactionRepository withdrawalTransactionRepository,
+                              TransferTransactionRepository transferTransactionRepository) {
         this.accountRepository = accountRepository;
         this.depositTransactionRepository = depositTransactionRepository;
         this.withdrawalTransactionRepository = withdrawalTransactionRepository;
+        this.transferTransactionRepository = transferTransactionRepository;
     }
 
     public boolean deposit(double amount) {
@@ -70,6 +76,69 @@ public class TransactionService {
         }
     }
 
+    public boolean transfer(double amount, int direction) {
+        // Direction variable -> 1 if checkings to savings, 2 if savings to checkings
+        UUID userId = AuthenticatedAccountContext.getAuthenticatedUserId();
+
+        if (!isValidRequest(userId, amount)) {
+            return false;
+        }
+
+        try (Connection connection = Database.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try {
+                Account checkingAccount = accountRepository.findByOwnerId(connection, userId);
+                Account savingAccount = accountRepository.findSavingsByOwnerId(connection, userId);
+                if (checkingAccount == null || savingAccount == null) {
+                    connection.rollback();
+                    logger.error("Transfer failed because no account was found for user {}.", userId);
+                    return false;
+                }
+
+                Account fromAccount = direction == 1 ? checkingAccount : savingAccount;
+                Account toAccount = direction == 1 ? savingAccount : checkingAccount;
+
+                if (fromAccount.getBalance() < amount) {
+                    connection.rollback();
+                    logger.error("Transfer failed because user {} has insufficient funds.", userId);
+                    return false;
+                }
+
+                double newFromBalance = fromAccount.getBalance() - amount;
+                double newToBalance = toAccount.getBalance() + amount;
+
+                boolean fromUpdated = direction == 1
+                        ? accountRepository.updateBalance(connection, fromAccount.getId(), newFromBalance)
+                        : accountRepository.updateSavingBalance(connection, fromAccount.getId(), newFromBalance);
+                boolean toUpdated = direction == 1
+                        ? accountRepository.updateSavingBalance(connection, toAccount.getId(), newToBalance)
+                        : accountRepository.updateBalance(connection, toAccount.getId(), newToBalance);
+
+                if (!fromUpdated || !toUpdated) {
+                    connection.rollback();
+                    logger.error("Transfer failed because an account could not be updated for user {}.", userId);
+                    return false;
+                }
+
+                transferTransactionRepository.save(connection, new TransferTransaction(
+                        userId,
+                        fromAccount.getId(),
+                        toAccount.getId(),
+                        amount));
+                connection.commit();
+                logger.info("Transfer of {} completed for user {}.", amount, userId);
+                return true;
+            } catch (SQLException e) {
+                connection.rollback();
+                logger.error("Transfer failed for user {}.", userId, e);
+                return false;
+            }
+        } catch (SQLException e) {
+            logger.error("Transfer could not connect to the database for user {}.", userId, e);
+            return false;
+        }
+    }
     public boolean withdraw(double amount) {
         UUID userId = AuthenticatedAccountContext.getAuthenticatedUserId();
 

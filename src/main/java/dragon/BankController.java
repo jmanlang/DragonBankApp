@@ -1,15 +1,17 @@
 package dragon;
 
 import dragon.entity.HasDate;
-import dragon.repository.TransactionRepository;
 import dragon.service.AuthService;
 import dragon.service.HistoryService;
 import dragon.service.TransactionService;
+import dragon.service.BalanceService;
 
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
+
+import java.sql.SQLException;
 import java.util.Scanner;
 import java.time.format.DateTimeParseException;
 import java.time.LocalDate;
@@ -20,15 +22,18 @@ public class BankController {
     private final TransactionService transactionService;
     private final HistoryService historyService;
 
+    private final BalanceService balanceService;
+
     private final Scanner sc = new Scanner(System.in);
 
-    public BankController(AuthService authService, TransactionService transactionService, HistoryService historyService) {
+    public BankController(AuthService authService, TransactionService transactionService, BalanceService balanceService, HistoryService historyService) {
         this.authService = authService;
         this.transactionService = transactionService;
         this.historyService = historyService;
+        this.balanceService = balanceService;
     }
 
-    public void init() {
+    public void init() throws SQLException {
         if (!isUserAuthenticated()) {
             userAuthenticationHandler();
         }
@@ -104,7 +109,7 @@ public class BankController {
     }
 
 
-    private void handleServicesMenu() {
+    private void handleServicesMenu() throws SQLException {
         boolean exit = false;
 
         while (!exit) {
@@ -145,7 +150,7 @@ public class BankController {
         System.out.println("4. Exit.");
     }
 
-    private boolean handleBalanceManagement() {
+    private boolean handleBalanceManagement() throws SQLException {
         boolean returnToMainMenu = false;
         boolean quickExit = false;
 
@@ -154,10 +159,10 @@ public class BankController {
             String input = sc.nextLine().trim();
             switch (input) {
                 case "1":
-                    System.out.println("Savings account: $500");
+                    handleSavingBalance();
                     break;
                 case "2":
-                    System.out.println("Checking account: $1000");
+                    handleCheckingBalance();
                     break;
                 case "3":
                     System.out.println("Returning to main menu...");
@@ -174,6 +179,24 @@ public class BankController {
             }
         }
         return quickExit;
+    }
+
+    private void handleCheckingBalance() throws SQLException {
+        Double checkingBalance = balanceService.getCheckingAccountBalance();
+        if (checkingBalance == null) {
+            System.out.println("Checking balance is null.");
+        } else {
+            System.out.println("Checking balance is " + checkingBalance);
+        }
+    }
+
+    private void handleSavingBalance() throws SQLException {
+            Double savingBalance = balanceService.getSavingAccountBalance();
+            if (savingBalance == null) {
+                System.out.println("Saving balance is null.");
+            }  else {
+                System.out.println("Saving balance is " + savingBalance);
+            }
     }
 
     private void printHistoryManagementMenu(){
@@ -259,7 +282,6 @@ public class BankController {
     private void handleTransactionServices() {
         boolean returnToMainMenu = false;
 
-
         while (!returnToMainMenu) {
             printTransactionServicesMenu();
             String input = sc.nextLine().trim();
@@ -313,28 +335,24 @@ public class BankController {
     }
 
     private void handleTransfer() {
-        // TODO: Print user accounts
-        System.out.print("Select sending account: ");
-        String sendingAcc = sc.nextLine().trim();
+        System.out.println("How would you like to perform the transfer?");
+        System.out.println("1. Checking Account -> Savings Account");
+        System.out.println("2. Savings Account -> Checkings Account");
 
-        // Print user accounts again
-        System.out.println("Select receiving account: ");
-        String receivingAcc = sc.nextLine().trim();
+        try {
+            int direction = sc.nextInt();
+            sc.nextLine();
+            System.out.print("Enter transfer amount: $");
+            double transferAmount = Double.parseDouble(sc.nextLine().trim());
+            if (transactionService.transfer(transferAmount, direction)) {
+                System.out.println("Transfer successful");
+            } else {
+                System.out.println("Transfer failed");
+            }
 
-        /*
-            TODO:  Validate sendingAcc and receivingAcc:
-                - Check if both match user accounts
-                - Check if sendingAcc != receivingAcc
-                - Check if sendingAcc.balance > $0
-         */
-
-        System.out.print("Enter amount to be transferred: ");
-        float transferAmount = sc.nextFloat();
-        sc.nextLine(); // consume leftover newline left by nextFloat()
-        // TODO: Check if sendingAcc.balance >= transferAmount, ask user to enter other amount
-
-        System.out.println("Transferred $" + transferAmount + " from " +
-                "account " + sendingAcc + " to account " + receivingAcc);
+        } catch (NumberFormatException e) {
+        System.out.println("Invalid dollar amount.");
+        }
     }
 
     private boolean isUserAuthenticated() {

@@ -21,6 +21,10 @@ public class TransferTransaction implements HasDate {
         this.date = date;
     }
 
+    public TransferTransaction(UUID userId, UUID fromAccount, UUID toAccount, double amount) {
+        this(UUID.randomUUID(), userId, fromAccount, toAccount, amount, Instant.now());
+    }
+
     public UUID getId() {
         return id;
     }
@@ -73,5 +77,4 @@ public class TransferTransaction implements HasDate {
     public String toString() {
         return String.format("Transaction type: Transfer, user ID: %s, from Account ID:%s, from Account ID: %s, amount: %.2f, date:%s", this.userId, this.fromAccount, this.toAccount, this.amount, this.date);
     }
-
 }
