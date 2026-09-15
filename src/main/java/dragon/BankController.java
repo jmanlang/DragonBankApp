@@ -224,6 +224,7 @@ public class BankController {
             startInstant = startDate.atStartOfDay(zoneId).toInstant();
         } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
+            return;
         }
         System.out.println("Enter end date(YYYY-MM-DD):");
         try {
@@ -233,6 +234,7 @@ public class BankController {
 
         } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
+            return;
         }
         //print transactions from  start date to  end date
         System.out.println("Printing transactions from " + startDateString + " to " + endDateString);
