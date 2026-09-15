@@ -3,23 +3,21 @@ package dragon;
 import dragon.database.Database;
 import dragon.repository.AccountRepository;
 import dragon.repository.DepositTransactionRepository;
-import dragon.database.Database;
 import dragon.repository.TransactionRepository;
 import dragon.repository.UserRepository;
 import dragon.repository.WithdrawalTransactionRepository;
 import dragon.service.AuthService;
 import dragon.service.TransactionService;
-
 import java.sql.SQLException;
 import dragon.service.HistoryService;
 
-import java.sql.SQLException;
 
 public class App {
     public static void main(String[] args) {
         try {
             Database.initialize();
-
+            TransactionRepository transactionRepository = new TransactionRepository();
+            HistoryService historyService = new HistoryService(transactionRepository);
             UserRepository userRepository = new UserRepository();
             AccountRepository accountRepository = new AccountRepository();
             AuthService authService = new AuthService(userRepository, accountRepository);
@@ -30,13 +28,10 @@ public class App {
                     depositTransactionRepository,
                     withdrawalTransactionRepository
             );
-            BankController app = new BankController(authService, transactionService);
+            BankController app = new BankController(authService, transactionService, historyService);
             app.init();
         } catch (SQLException e) {
             System.out.println("The bank could not start because the database is unavailable.");
         }
     }
-}
-
-
 }
