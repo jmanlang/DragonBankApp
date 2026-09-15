@@ -11,7 +11,7 @@ import java.sql.SQLException;
 public class CheckingAccountRepository {
 
     public void createCheckingAccount(Connection connection, CheckingAccount checkingAccount) throws SQLException {
-        String query = "INSERT INTO CheckingAccounts (id, userID, balance) VALUES (?, ?, ?)";
+        String query = "INSERT INTO CheckingAccounts (id, ownerID, balance) VALUES (?, ?, ?)";
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, checkingAccount.getID().toString());
@@ -21,11 +21,11 @@ public class CheckingAccountRepository {
         }
     }
 
-    public CheckingAccount findByUserID(Connection connection, UUID userID) throws SQLException {
-        String query = "SELECT id, userID, balance FROM CheckingAccounts WHERE userID = ?";
+    public CheckingAccount findByUserID(Connection connection, UUID ownerID) throws SQLException {
+        String query = "SELECT id, ownerID, balance FROM CheckingAccounts WHERE ownerID = ?";
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, userID.toString());
+            preparedStatement.setString(1, ownerID.toString());
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (!resultSet.next()) {
                     return null;
@@ -39,12 +39,12 @@ public class CheckingAccountRepository {
         }
     }
 
-    public boolean updateCheckingBalance(Connection connection, CheckingAccount checkingAccount, Double balance) throws SQLException {
-        if (balance == null || balance < 0) {
+    public boolean updateCheckingBalance(Connection connection, CheckingAccount checkingAccount, double balance) throws SQLException {
+        if (balance < 0) {
            return false;
         }
 
-        String query = "UPDATE CheckingAccounts SET balance = ? WHERE userID = ?";
+        String query = "UPDATE CheckingAccounts SET balance = ? WHERE ownerID = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setDouble(1, balance);
             preparedStatement.setString(2, checkingAccount.getUserID().toString());

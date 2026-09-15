@@ -11,11 +11,11 @@ import java.sql.SQLException;
 public class SavingAccountRepository {
 
     public void createSavingAccount(Connection connection, SavingAccount savingAccount) throws SQLException {
-        String query = "INSERT INTO SavingAccounts (id, userID, balance, interestRate) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO SavingAccounts (id, ownerID, balance, interestRate) VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setString(1, savingAccount.getID().toString());
-            preparedStatement.setString(2, savingAccount.getUserID().toString());
+            preparedStatement.setString(2, savingAccount.getOwnerID().toString());
             preparedStatement.setDouble(3, savingAccount.getBalance());
             preparedStatement.setDouble(4, savingAccount.getInterestRate());
             preparedStatement.executeUpdate();
@@ -23,7 +23,7 @@ public class SavingAccountRepository {
     }
 
     public SavingAccount findByUserID(Connection connection, UUID userID) throws SQLException {
-        String query = "SELECT id, userID, balance, interestRate FROM SavingAccounts WHERE UserID = ?";
+        String query = "SELECT id, ownerID, balance, interestRate FROM SavingAccounts WHERE UserID = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, userID.toString());
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -40,8 +40,8 @@ public class SavingAccountRepository {
         }
     }
 
-    public boolean updateSavingAccountBalance(Connection connection, SavingAccount savingAccount, Double balance) throws SQLException {
-        if (balance == null || balance < 0) {
+    public boolean updateSavingAccountBalance(Connection connection, SavingAccount savingAccount, double balance) throws SQLException {
+        if (balance < 0) {
             return false;
         }
 
@@ -49,22 +49,17 @@ public class SavingAccountRepository {
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setDouble(1, balance);
-            preparedStatement.setString(2, savingAccount.getUserID().toString());
+            preparedStatement.setString(2, savingAccount.getOwnerID().toString());
             return preparedStatement.executeUpdate() == 1;
         }
     }
 
-    public boolean updateSavingAccountInterestRate(Connection connection, SavingAccount savingAccount, Double interestRate) throws SQLException {
-        if (interestRate == null)  {
-            return false;
-        }
-
+    public void updateSavingAccountInterestRate(Connection connection, SavingAccount savingAccount, double interestRate) throws SQLException {
         String query = "UPDATE SavingAccounts SET interestRate = ? WHERE userID = ?";
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setDouble(1, interestRate);
-            preparedStatement.setString(2, savingAccount.getUserID().toString());
-            return preparedStatement.executeUpdate() == 1;
+            preparedStatement.setString(2, savingAccount.getOwnerID().toString());
         }
     }
 }

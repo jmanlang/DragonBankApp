@@ -4,13 +4,13 @@ import java.util.UUID;
 
 public class SavingAccount {
     private UUID id;
+    private UUID ownerID;
     private double interestRate;
     private double balance;
-    private UUID userID;
 
     public SavingAccount(UUID id, UUID userID, double balance, double interestRate) {
         this.id = id;
-        this.userID = userID;
+        this.ownerID = userID;
         this.setBalance(balance);
         this.setInterestRate(interestRate);
     }
@@ -38,8 +38,8 @@ public class SavingAccount {
         this.balance = balance;
     }
 
-    public UUID getUserID() {
-        return userID;
+    public UUID getOwnerID() {
+        return ownerID;
     }
 
 }

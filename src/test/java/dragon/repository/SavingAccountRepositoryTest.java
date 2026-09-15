@@ -64,7 +64,7 @@ class SavingAccountRepositoryTest {
 
         assertNotNull(found, "Expected to find the account that was just created");
         assertEquals(accountId, found.getID());
-        assertEquals(userId, found.getUserID());
+        assertEquals(userId, found.getOwnerID());
         assertEquals(500.0, found.getBalance(), 0.0001);
         assertEquals(0.025, found.getInterestRate(), 0.0001);
     }
