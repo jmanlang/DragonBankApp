@@ -75,6 +75,8 @@ public class Database {
                     CREATE TABLE IF NOT EXISTS TransferTransaction (
                         id TEXT PRIMARY KEY,
                         userId TEXT NOT NULL REFERENCES User(id),
+                        fromAccount TEXT NOT NULL REFERENCES Account(id),
+                        toAccount TEXT NOT NULL REFERENCES Account(id),
                         amount REAL NOT NULL CHECK (amount > 0),
                         date TEXT NOT NULL
                     )

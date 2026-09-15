@@ -3,7 +3,7 @@ package dragon.entity;
 import java.time.Instant;
 import java.util.UUID;
 
-public class DepositTransaction {
+public class DepositTransaction implements HasDate {
     private UUID id;
     private UUID userId;
     private double amount;
@@ -50,5 +50,9 @@ public class DepositTransaction {
 
     public void setDate(Instant date) {
         this.date = date;
+    }
+
+    public String toString() {
+        return String.format("Transaction type: Deposit,    user ID: %s, amount: %.2f, date:%s", this.userId, this.amount, this.date);
     }
 }

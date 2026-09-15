@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.UUID;
 
 public class TransactionService {
@@ -120,7 +121,11 @@ public class TransactionService {
                     return false;
                 }
 
-                transferTransactionRepository.save(connection, new TransferTransaction(userId, amount));
+                transferTransactionRepository.save(connection, new TransferTransaction(
+                        userId,
+                        fromAccount.getId(),
+                        toAccount.getId(),
+                        amount));
                 connection.commit();
                 logger.info("Transfer of {} completed for user {}.", amount, userId);
                 return true;

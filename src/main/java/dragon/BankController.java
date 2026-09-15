@@ -1,8 +1,15 @@
 package dragon;
 
+import dragon.entity.HasDate;
 import dragon.service.AuthService;
+import dragon.service.HistoryService;
 import dragon.service.TransactionService;
 import dragon.service.BalanceService;
+
+import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.List;
 
 import java.sql.SQLException;
 import java.util.Scanner;
@@ -13,13 +20,16 @@ import java.time.format.DateTimeFormatter;
 public class BankController {
     private final AuthService authService;
     private final TransactionService transactionService;
+    private final HistoryService historyService;
+
     private final BalanceService balanceService;
 
     private final Scanner sc = new Scanner(System.in);
 
-    public BankController(AuthService authService, TransactionService transactionService, BalanceService balanceService) {
+    public BankController(AuthService authService, TransactionService transactionService, BalanceService balanceService, HistoryService historyService) {
         this.authService = authService;
         this.transactionService = transactionService;
+        this.historyService = historyService;
         this.balanceService = balanceService;
     }
 
@@ -191,11 +201,10 @@ public class BankController {
 
     private void printHistoryManagementMenu(){
         System.out.println("What transactions would you like to print: ");
-        System.out.println("1. Print all checking account transactions");
-        System.out.println("2. Print all savings account transactions");
-        System.out.println("3. Print all transactions from custom range of dates");
-        System.out.println("4. Return to main menu");
-        System.out.println("5. Exit");
+        System.out.println("1. Print all transactions");
+        System.out.println("2. Print all transactions from custom range of dates");
+        System.out.println("3. Return to main menu");
+        System.out.println("4. Exit");
     }
 
     private boolean handleHistoryManagementMenu(){
@@ -204,18 +213,17 @@ public class BankController {
         while(!returnToMainMenu){
             printHistoryManagementMenu();
             int choice = Integer.parseInt(sc.nextLine());
-            if (choice == 4) {
+            if(choice == 1){
+                printTransactions(this.historyService.getAllHistory());
+            } else if (choice == 2) {
+                List<HasDate> transactions = chooseDatesMenu();
+                if(transactions != null){
+                    printTransactions(transactions);
+                }
+            } else if (choice == 3) {
                 System.out.println("Returning to Main Menu");
                 returnToMainMenu = true;
-            } else if (choice == 1) {
-                //middle layer finds and prints all checking transactions
-                System.out.println("Printing checking account transactions");
-            } else if (choice == 2) {
-                //middle layer finds and prints all saving transactions
-                System.out.println("Printing savings account transactions");
-            } else if (choice == 3) {
-                chooseDatesMenu();
-            } else if (choice == 5){
+            } else if (choice == 4){
                 System.out.println("Exiting Bank Application.");
                 returnToMainMenu = true;
                 quickExit = true;
@@ -227,28 +235,40 @@ public class BankController {
     }
 
 
-    private void chooseDatesMenu() {
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM-dd-yyyy");
-        String startDateString, endDateString;
-        System.out.println("Enter start date(MM-DD-YYYY):");
+    private List<HasDate> chooseDatesMenu() {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        ZoneId zoneId = ZoneId.systemDefault();
+        String startDateString = "", endDateString = " ";
+        System.out.println("Enter start date(YYYY-MM-DD):");
+        LocalDate startDate = null, endDate = null;
+        Instant startInstant = null, endInstant = null;
         try {
             startDateString = sc.nextLine();
-            LocalDate startDate = LocalDate.parse(startDateString, dateFormatter);
+            startDate = LocalDate.parse(startDateString, dateFormatter);
+            startInstant = startDate.atStartOfDay(zoneId).toInstant();
         } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
-            return;
+            return null;
         }
-        System.out.println("Enter end date(MM-DD-YYYY):");
+        System.out.println("Enter end date(YYYY-MM-DD):");
         try {
             endDateString = sc.nextLine();
-            LocalDate endDate = LocalDate.parse(endDateString, dateFormatter);
+            endDate = LocalDate.parse(endDateString, dateFormatter);
+            endInstant = endDate.atTime(LocalTime.MAX.withNano(0)).atZone(zoneId).toInstant();
+
         } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
-            return;
+            return null;
         }
-
         //print transactions from  start date to  end date
         System.out.println("Printing transactions from " + startDateString + " to " + endDateString);
+        return this.historyService.getRangeHistory(startInstant, endInstant);
+    }
+
+    private void printTransactions(List<HasDate> transactions){
+        for(HasDate transaction: transactions){
+            System.out.println(transaction.toString());
+        }
     }
   
     private void printTransactionServicesMenu() {
