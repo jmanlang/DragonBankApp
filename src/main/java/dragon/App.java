@@ -16,16 +16,16 @@ public class App {
             Connection connection = Database.getConnection();
 
             UserRepository userRepository = new UserRepository();
-            AccountRepository accountRepository = new AccountRepository();
             CheckingAccountRepository checkingAccountRepository = new CheckingAccountRepository();
             SavingAccountRepository savingAccountRepository = new SavingAccountRepository();
             BalanceService balanceService = new BalanceService(connection, checkingAccountRepository, savingAccountRepository);
-            AuthService authService = new AuthService(userRepository, accountRepository);
+            AuthService authService = new AuthService(userRepository, checkingAccountRepository, savingAccountRepository);
             DepositTransactionRepository depositTransactionRepository = new DepositTransactionRepository();
             WithdrawalTransactionRepository withdrawalTransactionRepository = new WithdrawalTransactionRepository();
             TransferTransactionRepository transferTransactionRepository = new TransferTransactionRepository();
             TransactionService transactionService = new TransactionService(
-                    accountRepository,
+                    checkingAccountRepository,
+                    savingAccountRepository,
                     depositTransactionRepository,
                     withdrawalTransactionRepository,
                     transferTransactionRepository

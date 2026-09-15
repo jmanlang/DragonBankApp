@@ -2,9 +2,11 @@ package dragon.service;
 
 import dragon.AuthenticatedAccountContext;
 import dragon.database.Database;
-import dragon.entity.Account;
+import dragon.entity.CheckingAccount;
+import dragon.entity.SavingAccount;
 import dragon.entity.User;
-import dragon.repository.AccountRepository;
+import dragon.repository.CheckingAccountRepository;
+import dragon.repository.SavingAccountRepository;
 import dragon.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +23,15 @@ public class AuthService {
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
-    private final AccountRepository accountRepository;
+    private final CheckingAccountRepository checkingAccountRepository;
+    private final SavingAccountRepository savingAccountRepository;
 
-    public AuthService(UserRepository userRepository, AccountRepository accountRepository) {
+    public AuthService(UserRepository userRepository,
+                       CheckingAccountRepository checkingAccountRepository,
+                       SavingAccountRepository savingAccountRepository) {
         this.userRepository = userRepository;
-        this.accountRepository = accountRepository;
+        this.checkingAccountRepository = checkingAccountRepository;
+        this.savingAccountRepository = savingAccountRepository;
     }
 
     public boolean register(String accountId, String password) {
@@ -48,12 +54,12 @@ public class AuthService {
 
                 User user = new User(normalizedAccountId, hashPassword(password));
                 userRepository.save(connection, user);
-                accountRepository.createCheckingAccount(
+                checkingAccountRepository.createCheckingAccount(
                         connection,
-                        new Account(UUID.randomUUID(), user.getId(), 0));
-                accountRepository.createSavingAccount(
+                        new CheckingAccount(UUID.randomUUID(), user.getId(), 0));
+                savingAccountRepository.createSavingAccount(
                         connection,
-                        new Account(UUID.randomUUID(), user.getId(), 0));
+                        new SavingAccount(UUID.randomUUID(), user.getId(), 0, 0));
                 connection.commit();
 
                 logger.info("User successfully registered with account ID {}.", normalizedAccountId);
