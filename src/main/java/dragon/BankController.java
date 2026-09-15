@@ -3,6 +3,9 @@ package dragon;
 import dragon.service.AuthService;
 import dragon.service.HistoryService;
 
+import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Scanner;
 import java.time.format.DateTimeParseException;
 import java.time.LocalDate;
@@ -208,29 +211,32 @@ public class BankController {
     }
 
 
-    private boolean chooseDatesMenu() {
+    private void  chooseDatesMenu() {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String startDateString, endDateString;
+        ZoneId zoneId = ZoneId.systemDefault();
+        String startDateString = "", endDateString = " ";
         System.out.println("Enter start date(YYYY-MM-DD):");
+        LocalDate startDate = null, endDate = null;
+        Instant startInstant = null, endInstant = null;
         try {
             startDateString = sc.nextLine();
-            LocalDate.parse(startDateString, dateFormatter);
+            startDate = LocalDate.parse(startDateString, dateFormatter);
+            startInstant = startDate.atStartOfDay(zoneId).toInstant();
         } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
-            return false;
         }
         System.out.println("Enter end date(YYYY-MM-DD):");
         try {
             endDateString = sc.nextLine();
-            LocalDate.parse(endDateString, dateFormatter);
+            endDate = LocalDate.parse(endDateString, dateFormatter);
+            endInstant = endDate.atTime(LocalTime.MAX.withNano(0)).atZone(zoneId).toInstant();
+
         } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
-            return false;
         }
-
         //print transactions from  start date to  end date
         System.out.println("Printing transactions from " + startDateString + " to " + endDateString);
-        return this.historyService.getRangeHistory(startDateString, endDateString);
+        this.historyService.getRangeHistory(startInstant, endInstant);
     }
 
     private void printTransactionServicesMenu() {
