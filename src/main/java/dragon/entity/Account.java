@@ -4,42 +4,37 @@ import java.util.UUID;
 
 public class Account {
     private UUID id;
-    private String bankAccountId;
-    private UUID ownerId; // References User.id
-    private float balance;
+    private UUID ownerId;
+    private double balance;
 
-    public Account(String accountId, UUID ownerId, float balance) {
-        this.id = UUID.randomUUID();
-        this.bankAccountId = accountId;
+    public Account(UUID id, UUID ownerId, double balance) {
+        this.id = id;
         this.ownerId = ownerId;
         this.balance = balance;
-    }
-
-    public Account(String accountId, UUID ownerId) {
-        this.id = UUID.randomUUID();
-        this.bankAccountId = accountId;
-        this.ownerId = ownerId;
-        this.balance = 0;
     }
 
     public UUID getId() {
         return id;
     }
 
-    public String getBankAccountId() {
-        return bankAccountId;
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public UUID getOwnerId() {
         return ownerId;
     }
 
-    public float getBalance() {
+    public void setOwnerId(UUID ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public double getBalance() {
         return balance;
     }
 
-    public void setBalance(float balance) {
-        if (balance >= 0) { // Prevent account from going below $0
+    public void setBalance(double balance) {
+        if (balance >= 0) {
             this.balance = balance;
         }
     }

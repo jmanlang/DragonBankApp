@@ -2,54 +2,66 @@ package dragon.repository;
 
 import dragon.entity.Account;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.UUID;
-// Note: Bodies of functions are not relevant right now, they will be jdbc calls.
+
 public class AccountRepository {
-    // Does a bank account the id exist? If so, return the Account object, else return null
-    public Account findByAccountId(String accountId) {
-        return new Account("123", UUID.randomUUID());
-    }
+    public Account findByOwnerId(Connection connection, UUID ownerId) throws SQLException {
+        String sql = "SELECT id, owner, balance FROM CheckingAccount WHERE owner = ? LIMIT 1";
 
-    // Is there a user with the account id?
-    public boolean existsByAccountId(String accountId) {
-        return false;
-    }
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, ownerId.toString());
 
-    // Return true if bank account belongs to passed in ownerId, false otherwise
-    public boolean checkOwnership(Account account, UUID ownerId) {
-        UUID inputOwner = account.getOwnerId();
-        return inputOwner.equals(ownerId);
-    }
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    return null;
+                }
 
-    // Add a new Account to the db.
-    public void save(Account account) {};
-
-    /* Deposits specified amount of money to account. Returns true if successful, false if not
-    (Ex: User entered invalid amount)
-    */
-
-    public float getBalance(Account account) {
-        return account.getBalance();
-    }
-
-    public boolean deposit(Account account, float amount) {
-        if (amount >= 0) {
-            float currentBalance = account.getBalance();
-            account.setBalance(currentBalance + amount);
-            return true;
+                return new Account(
+                        UUID.fromString(resultSet.getString("id")),
+                        UUID.fromString(resultSet.getString("owner")),
+                        resultSet.getDouble("balance")
+                );
+            }
         }
-        return false;
     }
 
-    /* Withdraws specified amount of money from account. Returns true if successful, false if not
-    (Ex: User entered invalid amount, not enough funds, etc.)
-    */
-    public boolean withdraw(Account account, float amount) {
-        float currentBalance = account.getBalance();
-        if (amount >= 0 && currentBalance >= amount) {
-            account.setBalance(currentBalance + amount);
-            return true;
+    public void createCheckingAccount(Connection connection, Account account) throws SQLException {
+        String sql = "INSERT INTO CheckingAccount (id, balance, owner) VALUES (?, ?, ?)";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, account.getId().toString());
+            statement.setDouble(2, account.getBalance());
+            statement.setString(3, account.getOwnerId().toString());
+            statement.executeUpdate();
         }
-        return false;
+    }
+
+    public void createSavingAccount(Connection connection, Account account) throws SQLException {
+        String sql = "INSERT INTO SavingAccount (id, balance, owner) VALUES (?, ?, ?)";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, account.getId().toString());
+            statement.setDouble(2, account.getBalance());
+            statement.setString(3, account.getOwnerId().toString());
+            statement.executeUpdate();
+        }
+    }
+
+    public boolean updateBalance(Connection connection, UUID accountId, double newBalance) throws SQLException {
+        if (newBalance < 0) {
+            return false;
+        }
+
+        String sql = "UPDATE CheckingAccount SET balance = ? WHERE id = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setDouble(1, newBalance);
+            statement.setString(2, accountId.toString());
+            return statement.executeUpdate() == 1;
+        }
     }
 }

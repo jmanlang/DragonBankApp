@@ -1,6 +1,5 @@
 package dragon;
 
-import dragon.repository.AccountRepository;
 import dragon.service.AuthService;
 import dragon.service.TransactionService;
 
@@ -11,17 +10,13 @@ import java.time.format.DateTimeFormatter;
 
 public class BankController {
     private final AuthService authService;
-    private final AccountRepository accountRepository;
+    private final TransactionService transactionService;
 
     private final Scanner sc = new Scanner(System.in);
 
-    public BankController(AuthService authService, AccountRepository accountRepository) {
+    public BankController(AuthService authService, TransactionService transactionService) {
         this.authService = authService;
-        this.accountRepository = accountRepository;
-    }
-
-    private TransactionService getTransactionService() {
-        return new TransactionService(AuthenticatedAccountContext.getAuthenticatedUserId(), accountRepository);
+        this.transactionService = transactionService;
     }
 
     public void init() {
@@ -271,36 +266,30 @@ public class BankController {
     }
 
     private void handleWithdrawal() {
-        // TODO: Print user's accounts
-
-        System.out.print("Select account: ");
-        String account = sc.nextLine().trim();
-
-        System.out.print("Enter withdrawal amount: ");
-        float withdrawAmount = sc.nextFloat();
-        sc.nextLine(); // consume leftover newline left by nextFloat()
-
-        if (getTransactionService().withdraw(account, withdrawAmount)) {
-            System.out.println("You withdrew $" + withdrawAmount + " from account " + account);
-        } else {
-            System.out.println("Withdrawal failed. Please check the account and amount and try again.");
+        System.out.print("Enter withdrawal amount: $");
+        try {
+            double withdrawalAmount = Double.parseDouble(sc.nextLine().trim());
+            if (transactionService.withdraw(withdrawalAmount)) {
+                System.out.println("Withdrawal successful.");
+            } else {
+                System.out.println("Withdrawal failed.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid dollar amount.");
         }
     }
 
     private void handleDeposit() {
-        // TODO: Print user accounts
-
-        System.out.print("Select account: ");
-        String account = sc.nextLine().trim();
-
-        System.out.print("Enter deposit amount:");
-        float depositAmount = sc.nextFloat();
-        sc.nextLine(); // consume leftover newline left by nextFloat()
-
-        if (getTransactionService().deposit(account, depositAmount)) {
-            System.out.println("You deposited $" + depositAmount + " to account " + account);
-        } else {
-            System.out.println("Deposit failed. Please check the account and amount and try again.");
+        System.out.print("Enter deposit amount: $");
+        try {
+            double depositAmount = Double.parseDouble(sc.nextLine().trim());
+            if (transactionService.deposit(depositAmount)) {
+                System.out.println("Deposit successful.");
+            } else {
+                System.out.println("Deposit failed.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid dollar amount.");
         }
     }
 
@@ -313,16 +302,20 @@ public class BankController {
         System.out.println("Select receiving account: ");
         String receivingAcc = sc.nextLine().trim();
 
+        /*
+            TODO:  Validate sendingAcc and receivingAcc:
+                - Check if both match user accounts
+                - Check if sendingAcc != receivingAcc
+                - Check if sendingAcc.balance > $0
+         */
+
         System.out.print("Enter amount to be transferred: ");
         float transferAmount = sc.nextFloat();
         sc.nextLine(); // consume leftover newline left by nextFloat()
+        // TODO: Check if sendingAcc.balance >= transferAmount, ask user to enter other amount
 
-        if (getTransactionService().transfer(sendingAcc, receivingAcc, transferAmount)) {
-            System.out.println("Transferred $" + transferAmount + " from " +
-                    "account " + sendingAcc + " to account " + receivingAcc);
-        } else {
-            System.out.println("Transfer failed. Please check the accounts and amount and try again.");
-        }
+        System.out.println("Transferred $" + transferAmount + " from " +
+                "account " + sendingAcc + " to account " + receivingAcc);
     }
 
     private boolean isUserAuthenticated() {

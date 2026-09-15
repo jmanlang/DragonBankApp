@@ -1,0 +1,54 @@
+package dragon.entity;
+
+import java.time.Instant;
+import java.util.UUID;
+
+public class DepositTransaction {
+    private UUID id;
+    private UUID userId;
+    private double amount;
+    private Instant date;
+
+    public DepositTransaction(UUID id, UUID userId, double amount, Instant date) {
+        this.id = id;
+        this.userId = userId;
+        this.amount = amount;
+        this.date = date;
+    }
+
+    public DepositTransaction(UUID userId, double amount) {
+        this(UUID.randomUUID(), userId, amount, Instant.now());
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+
+    public Instant getDate() {
+        return date;
+    }
+
+    public void setDate(Instant date) {
+        this.date = date;
+    }
+}
