@@ -13,7 +13,7 @@ public class WithdrawalTransactionRepository {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, transaction.getId().toString());
             statement.setString(2, transaction.getUserId().toString());
-            statement.setBigDecimal(3, transaction.getAmount());
+            statement.setDouble(3, transaction.getAmount());
             statement.setString(4, transaction.getDate().toString());
             statement.executeUpdate();
         }

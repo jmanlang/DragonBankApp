@@ -1,22 +1,17 @@
 package dragon;
 
-import dragon.exception.AccountAlreadyExistsException;
-import dragon.exception.BankingException;
-import dragon.exception.InvalidCredentialsException;
-import dragon.exception.ServiceUnavailableException;
-import dragon.exception.ValidationException;
 import dragon.service.AuthService;
 import dragon.service.TransactionService;
 
-import java.math.BigDecimal;
+import java.util.Scanner;
+import java.time.format.DateTimeParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.Scanner;
 
 public class BankController {
     private final AuthService authService;
     private final TransactionService transactionService;
+
     private final Scanner sc = new Scanner(System.in);
 
     public BankController(AuthService authService, TransactionService transactionService) {
@@ -28,12 +23,10 @@ public class BankController {
         if (!isUserAuthenticated()) {
             userAuthenticationHandler();
         }
-
         if (isUserAuthenticated()) {
             handleServicesMenu();
         }
     }
-
     private void userAuthenticationHandler() {
         while (!isUserAuthenticated()) {
             printAuthMenu();
@@ -44,9 +37,8 @@ public class BankController {
                     handleLogin();
                     break;
                 case "2":
-                    if (handleRegistration()) {
-                        handleLogin();
-                    }
+                    handleRegistration();
+                    handleLogin();
                     break;
                 default:
                     System.out.println("Invalid input. Please choose again.");
@@ -54,7 +46,6 @@ public class BankController {
             }
         }
     }
-
     private void printAuthMenu() {
         System.out.println("Welcome to the Bank of CLI\n");
         System.out.println("Would you like to login or register?:");
@@ -62,42 +53,36 @@ public class BankController {
         System.out.println("2. Register");
     }
 
-    private boolean handleRegistration() {
-        System.out.println("Account Registration");
-        System.out.print("Enter an account ID: ");
-        String accountId = sc.nextLine();
-        System.out.print("Enter a PIN: ");
-        String pin = sc.nextLine();
-
-        try {
-            authService.register(accountId, pin);
-            System.out.println("Registration complete. Please log in.");
-            return true;
-        } catch (ValidationException | AccountAlreadyExistsException e) {
-            System.out.println(e.getMessage());
-        } catch (ServiceUnavailableException e) {
-            // The full technical exception is already logged by the service.
-            System.out.println(e.getMessage());
+    private void handleRegistration() {
+        // Will add logging at a later date
+        boolean registerSuccess = false;
+        while (!registerSuccess) {
+            System.out.println("Account Registration");
+            System.out.print("Enter an account ID: ");
+            String accountId = sc.nextLine();
+            System.out.print("Enter a PIN: ");
+            String password = sc.nextLine();
+            if (authService.register(accountId, password)) {
+                System.out.println("Registration complete. Please log in.");
+                registerSuccess = true;
+            } else {
+                System.out.println("Registration failed. Try again.");
+            }
         }
-
-        return false;
     }
 
     private void handleLogin() {
+        // Will add logging at a later date
         System.out.println("Account Login");
         System.out.print("Enter an account ID: ");
         String accountId = sc.nextLine();
         System.out.print("Enter a PIN: ");
-        String pin = sc.nextLine();
+        String password = sc.nextLine();
 
-        try {
-            authService.login(accountId, pin);
+        if (authService.login(accountId, password)) {
             System.out.println("Login successful.");
-        } catch (InvalidCredentialsException e) {
-            System.out.println(e.getMessage());
-        } catch (ServiceUnavailableException e) {
-            // Do not print the technical stack trace to the CLI user.
-            System.out.println(e.getMessage());
+        } else {
+            System.out.println("Login failed. Try again.");
         }
     }
 
@@ -109,15 +94,16 @@ public class BankController {
         System.out.println("4. Exit");
     }
 
+
     private void handleServicesMenu() {
         boolean exit = false;
 
         while (!exit) {
             printServicesMenu();
             String input = sc.nextLine().trim();
-
             switch (input) {
                 case "1":
+                    // bank transaction
                     handleTransactionServices();
                     break;
                 case "2":
@@ -127,6 +113,7 @@ public class BankController {
                     }
                     break;
                 case "3":
+                    // transaction history
                     exit = handleHistoryManagementMenu();
                     break;
                 case "4":
@@ -141,6 +128,7 @@ public class BankController {
     }
 
     private void printBalanceManagementMenu() {
+        // included both checking and savings, but can rewrite for a singular balance
         System.out.println("Select an option:");
         System.out.println("1. Check the balance in your savings account.");
         System.out.println("2. Check the balance in your checking account.");
@@ -155,11 +143,12 @@ public class BankController {
         while (!returnToMainMenu) {
             printBalanceManagementMenu();
             String input = sc.nextLine().trim();
-
             switch (input) {
                 case "1":
+                    System.out.println("Savings account: $500");
+                    break;
                 case "2":
-                    System.out.println("Balance display is not implemented in this branch.");
+                    System.out.println("Checking account: $1000");
                     break;
                 case "3":
                     System.out.println("Returning to main menu...");
@@ -175,11 +164,10 @@ public class BankController {
                     break;
             }
         }
-
         return quickExit;
     }
 
-    private void printHistoryManagementMenu() {
+    private void printHistoryManagementMenu(){
         System.out.println("What transactions would you like to print: ");
         System.out.println("1. Print all checking account transactions");
         System.out.println("2. Print all savings account transactions");
@@ -188,64 +176,59 @@ public class BankController {
         System.out.println("5. Exit");
     }
 
-    private boolean handleHistoryManagementMenu() {
+    private boolean handleHistoryManagementMenu(){
         boolean returnToMainMenu = false;
         boolean quickExit = false;
-
-        while (!returnToMainMenu) {
+        while(!returnToMainMenu){
             printHistoryManagementMenu();
-            String input = sc.nextLine().trim();
-
-            switch (input) {
-                case "1":
-                case "2":
-                case "3":
-                    System.out.println("Transaction-history display is not implemented in this branch.");
-                    break;
-                case "4":
-                    System.out.println("Returning to Main Menu");
-                    returnToMainMenu = true;
-                    break;
-                case "5":
-                    System.out.println("Exiting Bank Application.");
-                    returnToMainMenu = true;
-                    quickExit = true;
-                    break;
-                default:
-                    System.out.println("Invalid Input, try again");
-                    break;
+            int choice = Integer.parseInt(sc.nextLine());
+            if (choice == 4) {
+                System.out.println("Returning to Main Menu");
+                returnToMainMenu = true;
+            } else if (choice == 1) {
+                //middle layer finds and prints all checking transactions
+                System.out.println("Printing checking account transactions");
+            } else if (choice == 2) {
+                //middle layer finds and prints all saving transactions
+                System.out.println("Printing savings account transactions");
+            } else if (choice == 3) {
+                chooseDatesMenu();
+            } else if (choice == 5){
+                System.out.println("Exiting Bank Application.");
+                returnToMainMenu = true;
+                quickExit = true;
+            }else {
+                System.out.println("Invalid Input, try again");
             }
         }
-
         return quickExit;
     }
 
+
     private void chooseDatesMenu() {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM-dd-yyyy");
-        String startDateString;
-        String endDateString;
-
+        String startDateString, endDateString;
         System.out.println("Enter start date(MM-DD-YYYY):");
         try {
             startDateString = sc.nextLine();
-            LocalDate.parse(startDateString, dateFormatter);
-        } catch (DateTimeParseException e) {
+            LocalDate startDate = LocalDate.parse(startDateString, dateFormatter);
+        } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
             return;
         }
-
         System.out.println("Enter end date(MM-DD-YYYY):");
         try {
             endDateString = sc.nextLine();
-            LocalDate.parse(endDateString, dateFormatter);
-        } catch (DateTimeParseException e) {
+            LocalDate endDate = LocalDate.parse(endDateString, dateFormatter);
+        } catch (DateTimeParseException msg) {
             System.out.println("Invalid input: not a date");
             return;
         }
 
+        //print transactions from  start date to  end date
         System.out.println("Printing transactions from " + startDateString + " to " + endDateString);
     }
-
+  
     private void printTransactionServicesMenu() {
         System.out.println("What kind of transaction would you like to do?");
         System.out.println("1. Make a deposit");
@@ -257,10 +240,10 @@ public class BankController {
     private void handleTransactionServices() {
         boolean returnToMainMenu = false;
 
+
         while (!returnToMainMenu) {
             printTransactionServicesMenu();
             String input = sc.nextLine().trim();
-
             switch (input) {
                 case "1":
                     handleDeposit();
@@ -284,35 +267,55 @@ public class BankController {
 
     private void handleWithdrawal() {
         System.out.print("Enter withdrawal amount: $");
-
         try {
-            BigDecimal amount = new BigDecimal(sc.nextLine().trim());
-            BigDecimal newBalance = transactionService.withdraw(amount);
-            System.out.println("Withdrawal successful. New balance: $" + newBalance);
+            double withdrawalAmount = Double.parseDouble(sc.nextLine().trim());
+            if (transactionService.withdraw(withdrawalAmount)) {
+                System.out.println("Withdrawal successful.");
+            } else {
+                System.out.println("Withdrawal failed.");
+            }
         } catch (NumberFormatException e) {
-            System.out.println("Invalid dollar amount. Example: 50 or 50.00");
-        } catch (BankingException e) {
-            System.out.println(e.getMessage());
+            System.out.println("Invalid dollar amount.");
         }
     }
 
     private void handleDeposit() {
         System.out.print("Enter deposit amount: $");
-
         try {
-            BigDecimal amount = new BigDecimal(sc.nextLine().trim());
-            BigDecimal newBalance = transactionService.deposit(amount);
-            System.out.println("Deposit successful. New balance: $" + newBalance);
+            double depositAmount = Double.parseDouble(sc.nextLine().trim());
+            if (transactionService.deposit(depositAmount)) {
+                System.out.println("Deposit successful.");
+            } else {
+                System.out.println("Deposit failed.");
+            }
         } catch (NumberFormatException e) {
-            System.out.println("Invalid dollar amount. Example: 50 or 50.00");
-        } catch (BankingException e) {
-            System.out.println(e.getMessage());
+            System.out.println("Invalid dollar amount.");
         }
     }
 
     private void handleTransfer() {
-        System.out.println("Transfers are not implemented yet.");
-        System.out.println("Transfer must be implemented as its own single database transaction.");
+        // TODO: Print user accounts
+        System.out.print("Select sending account: ");
+        String sendingAcc = sc.nextLine().trim();
+
+        // Print user accounts again
+        System.out.println("Select receiving account: ");
+        String receivingAcc = sc.nextLine().trim();
+
+        /*
+            TODO:  Validate sendingAcc and receivingAcc:
+                - Check if both match user accounts
+                - Check if sendingAcc != receivingAcc
+                - Check if sendingAcc.balance > $0
+         */
+
+        System.out.print("Enter amount to be transferred: ");
+        float transferAmount = sc.nextFloat();
+        sc.nextLine(); // consume leftover newline left by nextFloat()
+        // TODO: Check if sendingAcc.balance >= transferAmount, ask user to enter other amount
+
+        System.out.println("Transferred $" + transferAmount + " from " +
+                "account " + sendingAcc + " to account " + receivingAcc);
     }
 
     private boolean isUserAuthenticated() {

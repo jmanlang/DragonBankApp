@@ -2,30 +2,43 @@ package dragon.entity;
 
 import java.util.UUID;
 
+// Represents a row in the User SQL table.
 public class User {
-    private final UUID id;
-    private final String accountId;
-    private final String hashedPassword;
+    private UUID id;
+    private String accountId;
+    private String password;
 
-    public User(UUID id, String accountId, String hashedPassword) {
+    public User(UUID id, String accountId, String password) {
         this.id = id;
         this.accountId = accountId;
-        this.hashedPassword = hashedPassword;
+        this.password = password;
     }
 
-    public User(String accountId, String hashedPassword) {
-        this(UUID.randomUUID(), accountId, hashedPassword);
+    public User(String accountId, String password) {
+        this(UUID.randomUUID(), accountId, password);
     }
 
     public UUID getId() {
         return id;
     }
 
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
     public String getAccountId() {
         return accountId;
     }
 
-    public String getHashedPassword() {
-        return hashedPassword;
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
