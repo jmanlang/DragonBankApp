@@ -1,6 +1,7 @@
 package dragon;
 
 import dragon.service.AuthService;
+import dragon.service.TransactionService;
 
 import java.util.Scanner;
 import java.time.format.DateTimeParseException;
@@ -9,11 +10,13 @@ import java.time.format.DateTimeFormatter;
 
 public class BankController {
     private final AuthService authService;
+    private final TransactionService transactionService;
 
     private final Scanner sc = new Scanner(System.in);
 
-    public BankController(AuthService authService) {
+    public BankController(AuthService authService, TransactionService transactionService) {
         this.authService = authService;
+        this.transactionService = transactionService;
     }
 
     public void init() {
@@ -263,33 +266,31 @@ public class BankController {
     }
 
     private void handleWithdrawal() {
-        // TODO: Print user's accounts
-
-        System.out.print("Select account: ");
-        String account = sc.nextLine().trim();
-        // TODO: Validate account input, check if user input matches an account
-
-        System.out.print("Enter withdrawal amount: ");
-        float withdrawAmount = sc.nextFloat();
-        sc.nextLine(); // consume leftover newline left by nextFloat()
-        // TODO: Validate account has sufficient money, subtract amount from account balance
-
-        System.out.println("You withdrew $" + withdrawAmount + " from account " + account);
+        System.out.print("Enter withdrawal amount: $");
+        try {
+            double withdrawalAmount = Double.parseDouble(sc.nextLine().trim());
+            if (transactionService.withdraw(withdrawalAmount)) {
+                System.out.println("Withdrawal successful.");
+            } else {
+                System.out.println("Withdrawal failed.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid dollar amount.");
+        }
     }
 
     private void handleDeposit() {
-        // TODO: Print user accounts
-
-        System.out.print("Select account: ");
-        String account = sc.nextLine().trim();
-        // TODO: Validate account input, check if user input matches an account
-
-        System.out.print("Enter deposit amount:");
-        float depositAmount = sc.nextFloat();
-        sc.nextLine(); // consume leftover newline left by nextFloat()
-        // TODO: Add amount to account balance
-
-        System.out.println("You deposited $" + depositAmount + " to account " + account);
+        System.out.print("Enter deposit amount: $");
+        try {
+            double depositAmount = Double.parseDouble(sc.nextLine().trim());
+            if (transactionService.deposit(depositAmount)) {
+                System.out.println("Deposit successful.");
+            } else {
+                System.out.println("Deposit failed.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid dollar amount.");
+        }
     }
 
     private void handleTransfer() {
