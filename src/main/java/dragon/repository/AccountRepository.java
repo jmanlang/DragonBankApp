@@ -40,6 +40,17 @@ public class AccountRepository {
         }
     }
 
+    public void createSavingAccount(Connection connection, Account account) throws SQLException {
+        String sql = "INSERT INTO SavingAccount (id, balance, owner) VALUES (?, ?, ?)";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, account.getId().toString());
+            statement.setDouble(2, account.getBalance());
+            statement.setString(3, account.getOwnerId().toString());
+            statement.executeUpdate();
+        }
+    }
+
     public boolean updateBalance(Connection connection, UUID accountId, double newBalance) throws SQLException {
         if (newBalance < 0) {
             return false;

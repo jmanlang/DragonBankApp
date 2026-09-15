@@ -16,8 +16,8 @@ public class App {
             Database.initialize();
 
             UserRepository userRepository = new UserRepository();
-            AuthService authService = new AuthService(userRepository);
             AccountRepository accountRepository = new AccountRepository();
+            AuthService authService = new AuthService(userRepository, accountRepository);
             DepositTransactionRepository depositTransactionRepository = new DepositTransactionRepository();
             WithdrawalTransactionRepository withdrawalTransactionRepository = new WithdrawalTransactionRepository();
             TransactionService transactionService = new TransactionService(

@@ -18,10 +18,17 @@ import java.util.UUID;
 public class UserRepository {
     // Does the user by accountId exist? If so, return the User object. Else null.
     public User findByAccountId(String accountId) {
+        try (Connection connection = Database.getConnection()) {
+            return findByAccountId(connection, accountId);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Could not find user.", e);
+        }
+    }
+
+    public User findByAccountId(Connection connection, String accountId) throws SQLException {
         String sql = "SELECT id, accountId, password FROM User WHERE accountId = ?";
 
-        try (Connection connection = Database.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, accountId);
 
             try (ResultSet resultSet = statement.executeQuery()) {
@@ -35,8 +42,6 @@ public class UserRepository {
                         resultSet.getString("password")
                 );
             }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Could not find user.", e);
         }
     }
 
@@ -53,16 +58,21 @@ public class UserRepository {
 
     // Add a new User to the db.
     public void save(User user) {
+        try (Connection connection = Database.getConnection()) {
+            save(connection, user);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Could not save user.", e);
+        }
+    }
+
+    public void save(Connection connection, User user) throws SQLException {
         String sql = "INSERT INTO User (id, accountId, password) VALUES (?, ?, ?)";
 
-        try (Connection connection = Database.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, user.getId().toString());
             statement.setString(2, user.getAccountId());
             statement.setString(3, user.getPassword());
             statement.executeUpdate();
-        } catch (SQLException e) {
-            throw new IllegalStateException("Could not save user.", e);
         }
     }
 }
