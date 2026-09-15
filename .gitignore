@@ -190,6 +190,7 @@ Temporary Items
 
 ### Maven ###
 target/
+/data/*.db
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
@@ -252,5 +253,8 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-.idea/
-*.iml
+# End of https://www.toptal.com/developers/gitignore/api/macos,linux,windows,maven,java,visualstudiocode,intellij
+
+data
+
+logs
