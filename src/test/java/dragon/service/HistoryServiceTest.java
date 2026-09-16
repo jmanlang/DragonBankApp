@@ -24,19 +24,15 @@ public class HistoryServiceTest {
     @BeforeEach
     void setUp() throws SQLException {
         TransactionRepository transactionRepository = new TransactionRepository();
-        connection = Database.getConnection();
+        connection = DriverManager.getConnection("jdbc:sqlite::memory:");
         historyService = new HistoryService(transactionRepository, connection);
-        String sql = """
-                    CREATE TABLE IF NOT EXISTS TransferTransaction (
-                        id TEXT PRIMARY KEY,
-                        userId TEXT NOT NULL REFERENCES User(id),
-                        fromAccount TEXT NOT NULL,
-                        toAccount TEXT NOT NULL,
-                        amount REAL NOT NULL CHECK (amount > 0),
-                        date TEXT NOT NULL
-                    )
-                    """;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_TRANSFER_TRANSACTION)) {
+            statement.executeUpdate();
+        }
+        try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_DEPOSIT_TRANSACTION)) {
+            statement.executeUpdate();
+        }
+        try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_WITHDRAWAL_TRANSACTION)) {
             statement.executeUpdate();
         }
         UUID userId = UUID.randomUUID();
@@ -45,6 +41,7 @@ public class HistoryServiceTest {
 
     @AfterEach
     void tearDown() throws SQLException {
+        AuthenticatedAccountContext.setAuthenticatedUserId(null);
         connection.close();
     }
 
@@ -90,7 +87,6 @@ public class HistoryServiceTest {
         setupInsertTransaction();
         assertNotNull(historyService.getAllHistory());
     }
-
 
     @Test
     void testGetAllHistoryNoTransactions(){

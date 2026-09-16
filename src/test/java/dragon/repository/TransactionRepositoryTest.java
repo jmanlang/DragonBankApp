@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -28,18 +29,14 @@ public class TransactionRepositoryTest{
     void setUp() throws SQLException {
         this.userID = UUID.randomUUID();
         this.transactionRepository = new TransactionRepository();
-        connection = Database.getConnection();
-        String sql = """
-                    CREATE TABLE IF NOT EXISTS TransferTransaction (
-                        id TEXT PRIMARY KEY,
-                        userId TEXT NOT NULL REFERENCES User(id),
-                        fromAccount TEXT NOT NULL,
-                        toAccount TEXT NOT NULL,
-                        amount REAL NOT NULL CHECK (amount > 0),
-                        date TEXT NOT NULL
-                    )
-                    """;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        connection = DriverManager.getConnection("jdbc:sqlite::memory:");
+        try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_TRANSFER_TRANSACTION)) {
+            statement.executeUpdate();
+        }
+        try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_DEPOSIT_TRANSACTION)) {
+            statement.executeUpdate();
+        }
+        try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_WITHDRAWAL_TRANSACTION)) {
             statement.executeUpdate();
         }
     }

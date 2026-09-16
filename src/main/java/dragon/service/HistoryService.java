@@ -36,7 +36,7 @@ public class HistoryService {
             return transactions;
         }
         catch (SQLException e) {
-            logger.error("SQL Error: failed to get all transactions for userId {}", userId);
+            logger.error("SQL Error: failed to get all transactions for userId: {}, Message: {}", userId, e.toString());
             return null;
         }
         catch(NoTransactionsException e){
