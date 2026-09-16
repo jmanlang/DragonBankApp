@@ -135,7 +135,7 @@ public class BankController {
                     exit = true;
                     break;
                 default:
-                    System.out.println("Invalid input. Please choose again.");
+                    System.out.println("Not a valid option. Please choose again.");
                     break;
             }
         }
@@ -174,7 +174,7 @@ public class BankController {
                     returnToMainMenu = true;
                     break;
                 default:
-                    System.out.println("Invalid input. please try again.");
+                    System.out.println("Not a valid option. Please choose again.");
                     break;
             }
         }
@@ -184,7 +184,7 @@ public class BankController {
     private void handleCheckingBalance() throws SQLException {
         Double checkingBalance = balanceService.getCheckingAccountBalance();
         if (checkingBalance == null) {
-            System.out.println("Checking balance is null.");
+            System.out.println("Checking account not found. Please try again.");
         } else {
             System.out.println("Checking balance is " + checkingBalance);
         }
@@ -193,7 +193,7 @@ public class BankController {
     private void handleSavingBalance() throws SQLException {
             Double savingBalance = balanceService.getSavingAccountBalance();
             if (savingBalance == null) {
-                System.out.println("Saving balance is null.");
+                System.out.println("Saving account not found. Please try again.");
             }  else {
                 System.out.println("Saving balance is " + savingBalance);
             }
