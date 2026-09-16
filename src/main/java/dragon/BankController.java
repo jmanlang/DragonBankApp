@@ -319,10 +319,19 @@ public class BankController {
     }
 
     private void handleWithdrawal() {
+        System.out.println("Which account would you like to withdraw from?");
+        System.out.println("1. Checking Account");
+        System.out.println("2. Savings Account");
+        String accountType = sc.nextLine().trim();
+        if(!(accountType.equals("1") || accountType.equals("2"))){
+            System.out.println("Invalid choice.");
+            return;
+        }
+
         System.out.print("Enter withdrawal amount: $");
         try {
             double withdrawalAmount = Double.parseDouble(sc.nextLine().trim());
-            if (transactionService.withdraw(withdrawalAmount)) {
+            if (transactionService.withdraw(withdrawalAmount, accountType)) {
                 System.out.println("Withdrawal successful.");
             } else {
                 System.out.println("Withdrawal failed.");
@@ -333,10 +342,19 @@ public class BankController {
     }
 
     private void handleDeposit() {
+        System.out.println("Which account would you like to deposit into?");
+        System.out.println("1. Checking Account");
+        System.out.println("2. Savings Account");
+        String accountType = sc.nextLine().trim();
+        if(!(accountType.equals("1") || accountType.equals("2"))){
+            System.out.println("Invalid choice.");
+            return;
+        }
+
         System.out.print("Enter deposit amount: $");
         try {
             double depositAmount = Double.parseDouble(sc.nextLine().trim());
-            if (transactionService.deposit(depositAmount)) {
+            if (transactionService.deposit(depositAmount, accountType)) {
                 System.out.println("Deposit successful.");
             } else {
                 System.out.println("Deposit failed.");

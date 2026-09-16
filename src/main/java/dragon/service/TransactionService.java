@@ -2,11 +2,7 @@ package dragon.service;
 
 import dragon.AuthenticatedAccountContext;
 import dragon.database.Database;
-import dragon.entity.CheckingAccount;
-import dragon.entity.DepositTransaction;
-import dragon.entity.SavingAccount;
-import dragon.entity.TransferTransaction;
-import dragon.entity.WithdrawalTransaction;
+import dragon.entity.*;
 import dragon.repository.CheckingAccountRepository;
 import dragon.repository.SavingAccountRepository;
 import dragon.repository.DepositTransactionRepository;
@@ -40,7 +36,7 @@ public class TransactionService {
         this.transferTransactionRepository = transferTransactionRepository;
     }
 
-    public boolean deposit(double amount) {
+    public boolean deposit(double amount, String accountType) {
         UUID userId = AuthenticatedAccountContext.getAuthenticatedUserId();
 
         if (!isValidRequest(userId, amount)) {
@@ -51,7 +47,11 @@ public class TransactionService {
             connection.setAutoCommit(false);
 
             try {
-                CheckingAccount account = checkingAccountRepository.findByOwnerID(connection, userId);
+                Account account = switch (accountType) {
+                    case "1" -> checkingAccountRepository.findByOwnerID(connection, userId);
+                    case "2" -> savingAccountRepository.findByOwnerID(connection, userId);
+                    default -> null;
+                };
                 if (account == null) {
                     connection.rollback();
                     logger.error("Deposit failed because no checking account was found for user {}.", userId);
@@ -59,10 +59,21 @@ public class TransactionService {
                 }
 
                 double newBalance = account.getBalance() + amount;
-                if (!checkingAccountRepository.updateCheckingBalance(connection, account, newBalance)) {
-                    connection.rollback();
-                    logger.error("Deposit failed because checking account {} could not be updated.", account.getID());
-                    return false;
+                switch(accountType){
+                    case "1":
+                        if (!checkingAccountRepository.updateCheckingBalance(connection, (CheckingAccount) account, newBalance)) {
+                            connection.rollback();
+                            logger.error("Deposit failed because checking account {} could not be updated.", account.getID());
+                            return false;
+                        }
+                        break;
+                    case "2":
+                        if (!savingAccountRepository.updateSavingAccountBalance(connection, (SavingAccount) account, newBalance)) {
+                            connection.rollback();
+                            logger.error("Deposit failed because savings account {} could not be updated.", account.getID());
+                            return false;
+                        }
+                        break;
                 }
 
                 depositTransactionRepository.save(connection, new DepositTransaction(userId, amount));
@@ -145,7 +156,7 @@ public class TransactionService {
         }
     }
 
-    public boolean withdraw(double amount) {
+    public boolean withdraw(double amount, String accountType) {
         UUID userId = AuthenticatedAccountContext.getAuthenticatedUserId();
 
         if (!isValidRequest(userId, amount)) {
@@ -156,7 +167,11 @@ public class TransactionService {
             connection.setAutoCommit(false);
 
             try {
-                CheckingAccount account = checkingAccountRepository.findByOwnerID(connection, userId);
+                Account account = switch (accountType) {
+                    case "1" -> checkingAccountRepository.findByOwnerID(connection, userId);
+                    case "2" -> savingAccountRepository.findByOwnerID(connection, userId);
+                    default -> null;
+                };
                 if (account == null) {
                     connection.rollback();
                     logger.error("Withdrawal failed because no checking account was found for user {}.", userId);
@@ -170,10 +185,21 @@ public class TransactionService {
                 }
 
                 double newBalance = account.getBalance() - amount;
-                if (!checkingAccountRepository.updateCheckingBalance(connection, account, newBalance)) {
-                    connection.rollback();
-                    logger.error("Withdrawal failed because checking account {} could not be updated.", account.getID());
-                    return false;
+                switch(accountType){
+                    case "1":
+                        if (!checkingAccountRepository.updateCheckingBalance(connection, (CheckingAccount) account, newBalance)) {
+                            connection.rollback();
+                            logger.error("Withdrawal failed because checking account {} could not be updated.", account.getID());
+                            return false;
+                        }
+                        break;
+                    case "2":
+                        if (!savingAccountRepository.updateSavingAccountBalance(connection, (SavingAccount) account, newBalance)) {
+                            connection.rollback();
+                            logger.error("Withdrawal failed because savings account {} could not be updated.", account.getID());
+                            return false;
+                        }
+                        break;
                 }
 
                 withdrawalTransactionRepository.save(connection, new WithdrawalTransaction(userId, amount));
