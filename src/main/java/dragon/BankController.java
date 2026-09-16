@@ -5,6 +5,8 @@ import dragon.service.AuthService;
 import dragon.service.HistoryService;
 import dragon.service.TransactionService;
 import dragon.service.BalanceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.LocalTime;
@@ -25,6 +27,7 @@ public class BankController {
     private final BalanceService balanceService;
 
     private final Scanner sc = new Scanner(System.in);
+    private final static Logger logger = LoggerFactory.getLogger(BankController.class);
 
     public BankController(AuthService authService, TransactionService transactionService, BalanceService balanceService, HistoryService historyService) {
         this.authService = authService;
@@ -254,6 +257,7 @@ public class BankController {
             startDate = LocalDate.parse(startDateString, dateFormatter);
             startInstant = startDate.atStartOfDay(zoneId).toInstant();
         } catch (DateTimeParseException msg) {
+            logger.error("Invalid Input: User did not input start date in correct format.");
             System.out.println("Invalid input: not a date");
             return null;
         }
@@ -264,6 +268,7 @@ public class BankController {
             endInstant = endDate.atTime(LocalTime.MAX.withNano(0)).atZone(zoneId).toInstant();
 
         } catch (DateTimeParseException msg) {
+            logger.error("Invalid Input: User did not input end date in correct format.");
             System.out.println("Invalid input: not a date");
             return null;
         }

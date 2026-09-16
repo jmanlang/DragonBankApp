@@ -78,9 +78,6 @@ public class TransactionRepository {
 
     public List<HasDate> queryRangeTransactions(UUID accountNum, Connection connection,Instant startDate, Instant endDate) throws SQLException{
         List<HasDate> transactions = new ArrayList<>();
-//        String sqlDeposit = """SELECT * FROM DepositTransaction
-//                WHERE userId = ? AND date >= ? AND date <= ?
-//                ORDER BY date""";
 
         String sqlDeposit = "SELECT * FROM DepositTransaction " +
                 "WHERE userId = ? AND date >= ? AND date <= ?" +
