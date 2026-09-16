@@ -10,6 +10,7 @@ import java.util.UUID;
 import dragon.AuthenticatedAccountContext;
 import dragon.database.Database;
 import dragon.repository.TransactionRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class HistoryServiceTest {
     HistoryService historyService;
-    private Connection connection;
+    Connection connection;
 
 
     @BeforeEach
@@ -25,8 +26,7 @@ public class HistoryServiceTest {
         TransactionRepository transactionRepository = new TransactionRepository();
         connection = Database.getConnection();
         historyService = new HistoryService(transactionRepository, connection);
-        try (Statement statement = connection.createStatement()) {
-            statement.execute("""
+        String sql = """
                     CREATE TABLE IF NOT EXISTS TransferTransaction (
                         id TEXT PRIMARY KEY,
                         userId TEXT NOT NULL REFERENCES User(id),
@@ -35,13 +35,20 @@ public class HistoryServiceTest {
                         amount REAL NOT NULL CHECK (amount > 0),
                         date TEXT NOT NULL
                     )
-                    """);
+                    """;
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.executeUpdate();
         }
         UUID userId = UUID.randomUUID();
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
     }
 
-    void setupPositiveTests() throws SQLException{
+    @AfterEach
+    void tearDown() throws SQLException {
+        connection.close();
+    }
+
+    void setupInsertTransaction() throws SQLException{
         UUID userId = UUID.randomUUID();
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
         String userIdString = userId.toString();
@@ -62,9 +69,25 @@ public class HistoryServiceTest {
             statement.executeUpdate();
         }
     }
+
+    Instant convertStartDate(String startDate){
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        ZoneId zoneId = ZoneId.systemDefault();
+        LocalDate startLocalDate = LocalDate.parse(startDate, dateFormatter);
+        return startLocalDate.atStartOfDay(zoneId).toInstant();
+    }
+
+    Instant convertEndDate(String endDate){
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        ZoneId zoneId = ZoneId.systemDefault();
+        LocalDate endLocalDate = LocalDate.parse(endDate, dateFormatter);
+        return endLocalDate.atTime(LocalTime.MAX.withNano(0)).atZone(zoneId).toInstant();
+    }
+
+
     @Test
     void testGetAllHistoryPositive() throws SQLException{
-        setupPositiveTests();
+        setupInsertTransaction();
         assertNotNull(historyService.getAllHistory());
     }
 
@@ -76,32 +99,18 @@ public class HistoryServiceTest {
 
     @Test
     void testGetRangeHistoryPositive() throws SQLException{
-
-        setupPositiveTests();
-
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        ZoneId zoneId = ZoneId.systemDefault();
-
-        LocalDate startDate = LocalDate.parse("2006-09-01", dateFormatter);
-        Instant startInstant = startDate.atStartOfDay(zoneId).toInstant();
-
-        LocalDate endDate = LocalDate.parse("2030-09-01", dateFormatter);
-        Instant endInstant = endDate.atTime(LocalTime.MAX.withNano(0)).atZone(zoneId).toInstant();
+        setupInsertTransaction();
+        Instant startInstant = convertStartDate("2006-09-01");
+        Instant endInstant = convertEndDate("2030-09-01");
 
         assertNotNull(historyService.getRangeHistory(startInstant, endInstant));
     }
 
     @Test
-    void testGetRangeHistoryInvalidDateOrder() {
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        ZoneId zoneId = ZoneId.systemDefault();
-
-        LocalDate startDate = LocalDate.parse("2026-09-01", dateFormatter);
-        Instant startInstant = startDate.atStartOfDay(zoneId).toInstant();
-
-        LocalDate endDate = LocalDate.parse("2016-09-01", dateFormatter);
-        Instant endInstant = endDate.atTime(LocalTime.MAX.withNano(0)).atZone(zoneId).toInstant();
-
+    void testGetRangeHistoryInvalidDateOrder() throws SQLException {
+        setupInsertTransaction();
+        Instant startInstant = convertStartDate("2026-09-01");
+        Instant endInstant = convertEndDate("2016-09-01");
 
         assertNull(historyService.getRangeHistory(startInstant, endInstant));
     }
