@@ -66,18 +66,41 @@ public class TransactionServiceTest {
 
     @Test
     void transferPositive() throws SQLException {
-        // Valid transfer
+        // Valid transfer from checking to savings
         boolean result = transactionService.transfer(100.0, 1);
 
         assertTrue(result);
         assertEquals(400.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
         assertEquals(100.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
 
+        // Valid transfer from savings to checking
+        boolean result2 = transactionService.transfer(100.0, 2);
+
+        assertTrue(result2);
+        assertEquals(500.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
+        assertEquals(0.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
 
     }
 
     @Test
-    void transferNegative() throws SQLException {
+    void transferInsufficientFunds() throws SQLException {
+        // Transfer insufficient funds from checkings to savings
+        boolean result = transactionService.transfer(501, 1);
+
+        assertFalse(result);
+        assertEquals(500.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
+        assertEquals(0.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
+
+        // Transfer insufficient funds from savings to checking
+        boolean result2 = transactionService.transfer(1, 2);
+        assertFalse(result2);
+        assertEquals(500.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
+        assertEquals(0.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
+
+    }
+
+    @Test
+    void transferNegativeFunds() throws SQLException {
 
         // Transfer negative funds
         boolean result = transactionService.transfer(-50.0, 1);
