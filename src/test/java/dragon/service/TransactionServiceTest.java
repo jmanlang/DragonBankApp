@@ -25,9 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TransactionServiceTest {
 
-    private static final String TEST_DATABASE_URL = "jdbc:sqlite:file:transactionServiceTest?mode=memory&cache=shared";
-
-    private Connection holdingConnection;
+    private Connection connection;
     private CheckingAccountRepository checkingAccountRepository;
     private SavingAccountRepository savingAccountRepository;
     private TransactionService transactionService;
@@ -35,13 +33,10 @@ public class TransactionServiceTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        System.setProperty(Database.DATABASE_URL_PROPERTY, TEST_DATABASE_URL);
-        holdingConnection = DriverManager.getConnection(TEST_DATABASE_URL);
-        try (Statement statement = holdingConnection.createStatement()) {
-            statement.execute("DROP TABLE IF EXISTS CheckingAccount");
-            statement.execute("DROP TABLE IF EXISTS SavingAccount");
-            statement.execute("DROP TABLE IF EXISTS TransferTransaction");
-        }
+        System.setProperty(Database.DATABASE_URL_PROPERTY,
+                "jdbc:sqlite:file:test_bank?mode=memory&cache=shared");
+
+        connection = Database.getConnection();
         Database.initialize();
 
         checkingAccountRepository = new CheckingAccountRepository();
@@ -51,19 +46,22 @@ public class TransactionServiceTest {
                 savingAccountRepository,
                 new DepositTransactionRepository(),
                 new WithdrawalTransactionRepository(),
-                new TransferTransactionRepository());
+                new TransferTransactionRepository()
+        );
 
         userId = UUID.randomUUID();
-        checkingAccountRepository.createCheckingAccount(holdingConnection, new CheckingAccount(UUID.randomUUID(), userId, 500.0));
-        savingAccountRepository.createSavingAccount(holdingConnection, new SavingAccount(UUID.randomUUID(), userId, 0.0, 0.0));
+        checkingAccountRepository.createCheckingAccount(connection, new CheckingAccount(UUID.randomUUID(), userId, 500.0));
+        savingAccountRepository.createSavingAccount(connection, new SavingAccount(UUID.randomUUID(), userId, 0.0, 0.0));
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
     }
 
     @AfterEach
     void tearDown() throws SQLException {
         AuthenticatedAccountContext.setAuthenticatedUserId(null);
+        if (connection != null && !connection.isClosed()) {
+            connection.close();
+        }
         System.clearProperty(Database.DATABASE_URL_PROPERTY);
-        holdingConnection.close();
     }
 
     @Test
@@ -72,21 +70,62 @@ public class TransactionServiceTest {
         boolean result = transactionService.transfer(100.0, 1);
 
         assertTrue(result);
-        assertEquals(400.0, checkingAccountRepository.findByOwnerID(holdingConnection, userId).getBalance(), 0.0001);
-        assertEquals(100.0, savingAccountRepository.findByOwnerID(holdingConnection, userId).getBalance(), 0.0001);
+        assertEquals(400.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
+        assertEquals(100.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
+
+
     }
 
     @Test
     void transferNegative() throws SQLException {
-        // Transfer when invalid negative value is entered
+
+        // Transfer negative funds
         boolean result = transactionService.transfer(-50.0, 1);
 
         assertFalse(result);
-        assertEquals(500.0, checkingAccountRepository.findByOwnerID(holdingConnection, userId).getBalance(), 0.0001);
-        assertEquals(0.0, savingAccountRepository.findByOwnerID(holdingConnection, userId).getBalance(), 0.0001);
+        assertEquals(500.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
+        assertEquals(0.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
     }
 
-    // TODO: Write negative test for transferring with insufficient funds
+    @Test
+    void depositPositive() throws SQLException {
+        // Valid deposit of $50
+        boolean result = transactionService.deposit(50);
+
+        assertTrue(result);
+        assertEquals(550.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
+        assertEquals(0.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
+    }
+
+    @Test
+    void depositNegative() throws SQLException {
+        // Invalid deposit of -$50
+        boolean result = transactionService.deposit(-50);
+
+        assertFalse(result);
+        assertEquals(500.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
+        assertEquals(0.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
+    }
+
+    @Test
+    void withdrawPositive() throws SQLException {
+        // Valid withdrawal of $50
+        boolean result = transactionService.withdraw(50);
+
+        assertTrue(result);
+        assertEquals(450.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
+        assertEquals(0.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
+    }
+
+    @Test
+    void withdrawNegative() throws SQLException {
+        // Invalid withdrawal of -$50
+        boolean result = transactionService.withdraw(-50);
+
+        assertFalse(result);
+        assertEquals(500.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
+        assertEquals(0.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
+    }
+
+
 }
-
-
