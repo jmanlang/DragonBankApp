@@ -1,11 +1,11 @@
 package dragon.service;
 
 import dragon.AuthenticatedAccountContext;
+import dragon.database.Database;
 import dragon.entity.CheckingAccount;
 import dragon.entity.SavingAccount;
 import dragon.repository.CheckingAccountRepository;
 import dragon.repository.SavingAccountRepository;
-import dragon.database.Database;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,27 +22,33 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class BalanceServiceTest {
 
-    private Connection connection;
+    private static final String TEST_DB_URL = "jdbc:sqlite:file::memory:?cache=shared";
+
+    private Connection keepAliveConnection;
     private CheckingAccountRepository checkingAccountRepository;
     private SavingAccountRepository savingAccountRepository;
     private BalanceService balanceService;
 
     @BeforeEach
     void setUp() throws SQLException {
-        connection = DriverManager.getConnection("jdbc:sqlite::memory:");
-        try (Statement statement = connection.createStatement()) {
+        System.setProperty(Database.DATABASE_URL_PROPERTY, TEST_DB_URL);
+        keepAliveConnection = DriverManager.getConnection(TEST_DB_URL);
+
+        try (Statement statement = keepAliveConnection.createStatement()) {
             statement.execute(Database.CREATE_CHECKING_ACCOUNT);
             statement.execute(Database.CREATE_SAVING_ACCOUNT);
         }
+
         checkingAccountRepository = new CheckingAccountRepository();
         savingAccountRepository = new SavingAccountRepository();
-        balanceService = new BalanceService(connection, checkingAccountRepository, savingAccountRepository);
+        balanceService = new BalanceService(checkingAccountRepository, savingAccountRepository);
     }
 
     @AfterEach
     void tearDown() throws SQLException {
         AuthenticatedAccountContext.setAuthenticatedUserId(null);
-        connection.close();
+        keepAliveConnection.close(); // destroys the shared in-memory database
+        System.clearProperty(Database.DATABASE_URL_PROPERTY);
     }
 
     @Test
@@ -64,7 +70,8 @@ class BalanceServiceTest {
     @Test
     void getCheckingAccountBalance_returnsRealBalance_whenAccountExists() throws SQLException {
         UUID userId = UUID.randomUUID();
-        checkingAccountRepository.createCheckingAccount(connection, new CheckingAccount(UUID.randomUUID(), userId, 1200.50));
+        checkingAccountRepository.createCheckingAccount(keepAliveConnection,
+                new CheckingAccount(UUID.randomUUID(), userId, 1200.50));
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
 
         assertEquals(1200.50, balanceService.getCheckingAccountBalance(), 0.0001);
@@ -73,7 +80,8 @@ class BalanceServiceTest {
     @Test
     void getSavingAccountBalance_returnsRealBalance_whenAccountExists() throws SQLException {
         UUID userId = UUID.randomUUID();
-        savingAccountRepository.createSavingAccount(connection, new SavingAccount(UUID.randomUUID(), userId, 5000.00, 0.02));
+        savingAccountRepository.createSavingAccount(keepAliveConnection,
+                new SavingAccount(UUID.randomUUID(), userId, 5000.00, 0.02));
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
 
         assertEquals(5000.00, balanceService.getSavingAccountBalance(), 0.0001);
@@ -82,28 +90,41 @@ class BalanceServiceTest {
     @Test
     void checkingAndSavingBalances_areNotMixedUp() throws SQLException {
         UUID userId = UUID.randomUUID();
-        checkingAccountRepository.createCheckingAccount(connection, new CheckingAccount(UUID.randomUUID(), userId, 100.0));
-        savingAccountRepository.createSavingAccount(connection, new SavingAccount(UUID.randomUUID(), userId, 999.0, 0.01));AuthenticatedAccountContext.setAuthenticatedUserId(userId);
+        checkingAccountRepository.createCheckingAccount(keepAliveConnection,
+                new CheckingAccount(UUID.randomUUID(), userId, 100.0));
+        savingAccountRepository.createSavingAccount(keepAliveConnection,
+                new SavingAccount(UUID.randomUUID(), userId, 999.0, 0.01));
+        AuthenticatedAccountContext.setAuthenticatedUserId(userId);
 
-        assertEquals(100.0, balanceService.getCheckingAccountBalance(), 0.0001, "Checking balance should be 100, not the saving balance");
-        assertEquals(999.0, balanceService.getSavingAccountBalance(), 0.0001, "Saving balance should be 999, not the checking balance");
+        assertEquals(100.0, balanceService.getCheckingAccountBalance(), 0.0001,
+                "Checking balance should be 100, not the saving balance");
+        assertEquals(999.0, balanceService.getSavingAccountBalance(), 0.0001,
+                "Saving balance should be 999, not the checking balance");
     }
 
     @Test
     void getCheckingAccountBalance_negative_propagatesExceptionOnDatabaseFailure() throws SQLException {
         UUID userId = UUID.randomUUID();
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
-        connection.close();
 
-        assertThrows(SQLException.class, () -> balanceService.getCheckingAccountBalance(), "A database failure should propagate to the caller, not be silently swallowed");
+        try (Statement statement = keepAliveConnection.createStatement()) {
+            statement.execute("DROP TABLE CheckingAccount");
+        }
+
+        assertThrows(SQLException.class, () -> balanceService.getCheckingAccountBalance(),
+                "A database failure should propagate to the caller, not be silently swallowed");
     }
 
     @Test
     void getSavingAccountBalance_negative_propagatesExceptionOnDatabaseFailure() throws SQLException {
         UUID userId = UUID.randomUUID();
         AuthenticatedAccountContext.setAuthenticatedUserId(userId);
-        connection.close();
 
-        assertThrows(SQLException.class, () -> balanceService.getSavingAccountBalance(), "A database failure should propagate to the caller, not be silently swallowed");
+        try (Statement statement = keepAliveConnection.createStatement()) {
+            statement.execute("DROP TABLE SavingAccount");
+        }
+
+        assertThrows(SQLException.class, () -> balanceService.getSavingAccountBalance(),
+                "A database failure should propagate to the caller, not be silently swallowed");
     }
 }

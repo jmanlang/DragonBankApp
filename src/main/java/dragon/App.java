@@ -18,7 +18,7 @@ public class App {
             UserRepository userRepository = new UserRepository();
             CheckingAccountRepository checkingAccountRepository = new CheckingAccountRepository();
             SavingAccountRepository savingAccountRepository = new SavingAccountRepository();
-            BalanceService balanceService = new BalanceService(connection, checkingAccountRepository, savingAccountRepository);
+            BalanceService balanceService = new BalanceService(checkingAccountRepository, savingAccountRepository);
             AuthService authService = new AuthService(userRepository, checkingAccountRepository, savingAccountRepository);
             DepositTransactionRepository depositTransactionRepository = new DepositTransactionRepository();
             WithdrawalTransactionRepository withdrawalTransactionRepository = new WithdrawalTransactionRepository();
