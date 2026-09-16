@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class TransactionRepository {
-    public List<HasDate> queryAllTransactions(UUID accountNum, Connection connection){
+    public List<HasDate> queryAllTransactions(UUID accountNum, Connection connection) throws SQLException{
 
         List<HasDate> transactions = new ArrayList<>();
 
@@ -34,8 +34,6 @@ public class TransactionRepository {
                         Instant.parse(rsDeposit.getString(4)));
                 transactions.add(depositTransaction);
             }
-        }catch(SQLException e){
-            System.out.println(e);
         }
 
 
@@ -53,8 +51,6 @@ public class TransactionRepository {
                         Instant.parse(rsWithdrawal.getString(4)));
                 transactions.add(withdrawalTransaction);
             }
-        }catch(SQLException e){
-            System.out.println(e);
         }
 
         String sqlTransfer = "SELECT * FROM TransferTransaction " +
@@ -73,8 +69,6 @@ public class TransactionRepository {
                         Instant.parse(rsTransfer.getString(6)));
                 transactions.add(transferTransaction);
             }
-        }catch(SQLException e){
-            System.out.println(e);
         }
 
         transactions.sort(Comparator.comparing(HasDate::getDate));
@@ -82,7 +76,7 @@ public class TransactionRepository {
         return transactions;
     }
 
-    public List<HasDate> queryRangeTransactions(UUID accountNum, Connection connection,Instant startDate, Instant endDate){
+    public List<HasDate> queryRangeTransactions(UUID accountNum, Connection connection,Instant startDate, Instant endDate) throws SQLException{
         List<HasDate> transactions = new ArrayList<>();
 //        String sqlDeposit = """SELECT * FROM DepositTransaction
 //                WHERE userId = ? AND date >= ? AND date <= ?
@@ -104,8 +98,6 @@ public class TransactionRepository {
                         Instant.parse(rsDeposit.getString(4)));
                 transactions.add(depositTransaction);
             }
-        }catch(SQLException e){
-            System.out.println(e);
         }
 
 
@@ -125,8 +117,6 @@ public class TransactionRepository {
                         Instant.parse(rsWithdrawal.getString(4)));
                 transactions.add(withdrawalTransaction);
             }
-        }catch(SQLException e){
-            System.out.println(e);
         }
 
         String sqlTransfer = "SELECT * FROM TransferTransaction " +
@@ -147,8 +137,6 @@ public class TransactionRepository {
                         Instant.parse(rsTransfer.getString(6)));
                 transactions.add(transferTransaction);
             }
-        }catch(SQLException e){
-            System.out.println(e);
         }
 
         transactions.sort(Comparator.comparing(HasDate::getDate));

@@ -214,11 +214,18 @@ public class BankController {
             printHistoryManagementMenu();
             int choice = Integer.parseInt(sc.nextLine());
             if(choice == 1){
-                printTransactions(this.historyService.getAllHistory());
-            } else if (choice == 2) {
+                List<HasDate> transactions = historyService.getAllHistory();
+                if(transactions != null){
+                    printTransactions(transactions);
+                }else{
+                    System.out.println("There was a problem printing your transaction history or you have no history, try again later.");
+                }
+            }else if (choice == 2) {
                 List<HasDate> transactions = chooseDatesMenu();
                 if(transactions != null){
                     printTransactions(transactions);
+                } else{
+                    System.out.println("There was a problem printing your transaction history or you have no history between those dates, try again later.");
                 }
             } else if (choice == 3) {
                 System.out.println("Returning to Main Menu");
