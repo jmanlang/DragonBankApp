@@ -5,6 +5,7 @@ import dragon.entity.CheckingAccount;
 import dragon.entity.SavingAccount;
 import dragon.repository.CheckingAccountRepository;
 import dragon.repository.SavingAccountRepository;
+import dragon.database.Database;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,15 +31,8 @@ class BalanceServiceTest {
     void setUp() throws SQLException {
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
         try (Statement statement = connection.createStatement()) {
-            statement.execute(
-                    "CREATE TABLE CheckingAccount (" +
-                            "id TEXT PRIMARY KEY, owner TEXT NOT NULL, balance REAL NOT NULL DEFAULT 0)"
-            );
-            statement.execute(
-                    "CREATE TABLE SavingAccount (" +
-                            "id TEXT PRIMARY KEY, owner TEXT NOT NULL, balance REAL NOT NULL DEFAULT 0, " +
-                            "interestRate REAL NOT NULL DEFAULT 0)"
-            );
+            statement.execute(Database.CREATE_CHECKING_ACCOUNT);
+            statement.execute(Database.CREATE_SAVING_ACCOUNT);
         }
         checkingAccountRepository = new CheckingAccountRepository();
         savingAccountRepository = new SavingAccountRepository();
