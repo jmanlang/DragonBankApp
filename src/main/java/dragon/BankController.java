@@ -351,9 +351,17 @@ public class BankController {
         System.out.println("1. Checking Account -> Savings Account");
         System.out.println("2. Savings Account -> Checkings Account");
 
+        int direction = -1;
+        while (direction != 1 && direction != 2) {
+            String input = sc.nextLine().trim();
+            if (input.equals("1") || input.equals("2")) {
+                direction = Integer.parseInt(input);
+            } else {
+                System.out.print("Please enter a valid operation: ");
+            }
+        }
+
         try {
-            int direction = sc.nextInt();
-            sc.nextLine();
             System.out.print("Enter transfer amount: $");
             double transferAmount = Double.parseDouble(sc.nextLine().trim());
             if (transactionService.transfer(transferAmount, direction)) {
