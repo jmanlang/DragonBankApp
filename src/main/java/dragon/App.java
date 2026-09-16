@@ -11,14 +11,14 @@ public class App {
     public static void main(String[] args) {
         try {
             Database.initialize();
-            TransactionRepository transactionRepository = new TransactionRepository();
-            HistoryService historyService = new HistoryService(transactionRepository);
             Connection connection = Database.getConnection();
 
+            TransactionRepository transactionRepository = new TransactionRepository();
+            HistoryService historyService = new HistoryService(transactionRepository);
             UserRepository userRepository = new UserRepository();
             CheckingAccountRepository checkingAccountRepository = new CheckingAccountRepository();
             SavingAccountRepository savingAccountRepository = new SavingAccountRepository();
-            BalanceService balanceService = new BalanceService(connection, checkingAccountRepository, savingAccountRepository);
+            BalanceService balanceService = new BalanceService(checkingAccountRepository, savingAccountRepository);
             AuthService authService = new AuthService(userRepository, checkingAccountRepository, savingAccountRepository);
             DepositTransactionRepository depositTransactionRepository = new DepositTransactionRepository();
             WithdrawalTransactionRepository withdrawalTransactionRepository = new WithdrawalTransactionRepository();

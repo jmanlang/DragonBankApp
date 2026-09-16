@@ -5,6 +5,8 @@ import dragon.service.AuthService;
 import dragon.service.HistoryService;
 import dragon.service.TransactionService;
 import dragon.service.BalanceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.LocalTime;
@@ -25,6 +27,7 @@ public class BankController {
     private final BalanceService balanceService;
 
     private final Scanner sc = new Scanner(System.in);
+    private final static Logger logger = LoggerFactory.getLogger(BankController.class);
 
     public BankController(AuthService authService, TransactionService transactionService, BalanceService balanceService, HistoryService historyService) {
         this.authService = authService;
@@ -135,7 +138,7 @@ public class BankController {
                     exit = true;
                     break;
                 default:
-                    System.out.println("Invalid input. Please choose again.");
+                    System.out.println("Not a valid option. Please choose again.");
                     break;
             }
         }
@@ -174,7 +177,7 @@ public class BankController {
                     returnToMainMenu = true;
                     break;
                 default:
-                    System.out.println("Invalid input. please try again.");
+                    System.out.println("Not a valid option. Please choose again.");
                     break;
             }
         }
@@ -184,7 +187,7 @@ public class BankController {
     private void handleCheckingBalance() throws SQLException {
         Double checkingBalance = balanceService.getCheckingAccountBalance();
         if (checkingBalance == null) {
-            System.out.println("Checking balance is null.");
+            System.out.println("Checking account not found. Please try again.");
         } else {
             System.out.println("Checking balance is " + checkingBalance);
         }
@@ -193,7 +196,7 @@ public class BankController {
     private void handleSavingBalance() throws SQLException {
             Double savingBalance = balanceService.getSavingAccountBalance();
             if (savingBalance == null) {
-                System.out.println("Saving balance is null.");
+                System.out.println("Saving account not found. Please try again.");
             }  else {
                 System.out.println("Saving balance is " + savingBalance);
             }
@@ -214,11 +217,18 @@ public class BankController {
             printHistoryManagementMenu();
             int choice = Integer.parseInt(sc.nextLine());
             if(choice == 1){
-                printTransactions(this.historyService.getAllHistory());
-            } else if (choice == 2) {
+                List<HasDate> transactions = historyService.getAllHistory();
+                if(transactions != null){
+                    printTransactions(transactions);
+                }else{
+                    System.out.println("There was a problem printing your transaction history or you have no history, try again later.");
+                }
+            }else if (choice == 2) {
                 List<HasDate> transactions = chooseDatesMenu();
                 if(transactions != null){
                     printTransactions(transactions);
+                } else{
+                    System.out.println("There was a problem printing your transaction history or you have no history between those dates, try again later.");
                 }
             } else if (choice == 3) {
                 System.out.println("Returning to Main Menu");
@@ -247,6 +257,7 @@ public class BankController {
             startDate = LocalDate.parse(startDateString, dateFormatter);
             startInstant = startDate.atStartOfDay(zoneId).toInstant();
         } catch (DateTimeParseException msg) {
+            logger.error("Invalid Input: User did not input start date in correct format.");
             System.out.println("Invalid input: not a date");
             return null;
         }
@@ -257,6 +268,7 @@ public class BankController {
             endInstant = endDate.atTime(LocalTime.MAX.withNano(0)).atZone(zoneId).toInstant();
 
         } catch (DateTimeParseException msg) {
+            logger.error("Invalid Input: User did not input end date in correct format.");
             System.out.println("Invalid input: not a date");
             return null;
         }

@@ -1,4 +1,5 @@
 package dragon.repository;
+import dragon.database.Database;
 
 import dragon.entity.CheckingAccount;
 import org.junit.jupiter.api.AfterEach;
@@ -25,16 +26,9 @@ class CheckingAccountRepositoryTest {
 
     @BeforeEach
     void setUp() throws SQLException {
-        // A brand new in-memory SQLite DB per test, kept alive only while
-        // this Connection stays open.
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
         try (Statement statement = connection.createStatement()) {
-            statement.execute(
-                    "CREATE TABLE CheckingAccount (" +
-                            "id TEXT PRIMARY KEY, " +
-                            "owner TEXT NOT NULL, " +
-                            "balance REAL NOT NULL DEFAULT 0)"
-            );
+            statement.execute(Database.CREATE_CHECKING_ACCOUNT);
         }
         repository = new CheckingAccountRepository();
     }
@@ -82,7 +76,6 @@ class CheckingAccountRepositoryTest {
 
     @Test
     void createCheckingAccount_withZeroBalance_isAllowed() throws SQLException {
-        // Regression test: setBalance() used to reject 0 (<=0 bug found earlier)
         UUID accountId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         CheckingAccount freshAccount = new CheckingAccount(accountId, userId, 0.0);
@@ -94,14 +87,8 @@ class CheckingAccountRepositoryTest {
         assertEquals(0.0, found.getBalance(), 0.0001);
     }
 
-    // --- createCheckingAccount: negative test ---
-
     @Test
     void createCheckingAccount_rejectsDuplicateAccountId() throws SQLException {
-        // Positive case is createThenFind_roundTripsCorrectly above.
-        // Negative case: the "id" column is the primary key, so inserting
-        // the same account id twice must fail rather than silently
-        // overwrite or create a duplicate row.
         UUID accountId = UUID.randomUUID();
         CheckingAccount first = new CheckingAccount(accountId, UUID.randomUUID(), 100.0);
         CheckingAccount duplicateId = new CheckingAccount(accountId, UUID.randomUUID(), 200.0);
@@ -112,8 +99,6 @@ class CheckingAccountRepositoryTest {
                 () -> repository.createCheckingAccount(connection, duplicateId),
                 "Inserting a second account with the same primary key id should fail");
     }
-
-    // --- updateCheckingBalance: positive + negative tests ---
 
     @Test
     void updateCheckingBalance_positive_actuallyChangesTheStoredValue() throws SQLException {
