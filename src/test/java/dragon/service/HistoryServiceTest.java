@@ -18,14 +18,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class HistoryServiceTest {
     HistoryService historyService;
-    Connection connection;
-
+    private static final String TEST_DB_URL = "jdbc:sqlite:file::memory:?cache=shared";
+    private Connection connection;
 
     @BeforeEach
     void setUp() throws SQLException {
         TransactionRepository transactionRepository = new TransactionRepository();
-        connection = DriverManager.getConnection("jdbc:sqlite::memory:");
-        historyService = new HistoryService(transactionRepository, connection);
+        System.setProperty(Database.DATABASE_URL_PROPERTY, TEST_DB_URL);
+        connection = DriverManager.getConnection(TEST_DB_URL);
+        historyService = new HistoryService(transactionRepository);
         try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_TRANSFER_TRANSACTION)) {
             statement.executeUpdate();
         }
@@ -43,6 +44,7 @@ public class HistoryServiceTest {
     void tearDown() throws SQLException {
         AuthenticatedAccountContext.setAuthenticatedUserId(null);
         connection.close();
+        System.clearProperty(Database.DATABASE_URL_PROPERTY);
     }
 
     void setupInsertTransaction() throws SQLException{

@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TransactionRepositoryTest{
     TransactionRepository transactionRepository;
+    private static final String TEST_DB_URL = "jdbc:sqlite:file::memory:?cache=shared";
     Connection connection;
     UUID userID;
 
@@ -29,7 +30,8 @@ public class TransactionRepositoryTest{
     void setUp() throws SQLException {
         this.userID = UUID.randomUUID();
         this.transactionRepository = new TransactionRepository();
-        connection = DriverManager.getConnection("jdbc:sqlite::memory:");
+        System.setProperty(Database.DATABASE_URL_PROPERTY, TEST_DB_URL);
+        connection = DriverManager.getConnection(TEST_DB_URL);
         try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_TRANSFER_TRANSACTION)) {
             statement.executeUpdate();
         }
@@ -44,6 +46,7 @@ public class TransactionRepositoryTest{
     @AfterEach
     void tearDown() throws SQLException {
         connection.close();
+        System.clearProperty(Database.DATABASE_URL_PROPERTY);
     }
 
     void setupInsertTransaction() throws SQLException{

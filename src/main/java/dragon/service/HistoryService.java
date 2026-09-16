@@ -2,6 +2,7 @@ package dragon.service;
 
 import dragon.AuthenticatedAccountContext;
 import dragon.Exceptions.NoTransactionsException;
+import dragon.database.Database;
 import dragon.entity.HasDate;
 import dragon.repository.TransactionRepository;
 import org.slf4j.Logger;
@@ -17,18 +18,17 @@ public class HistoryService {
 
     private final static Logger logger = LoggerFactory.getLogger(HistoryService.class);
     private final TransactionRepository transactionRepository;
-    private final Connection connection;
 
-    public HistoryService(TransactionRepository transactionRepository, Connection connection) {
+    public HistoryService(TransactionRepository transactionRepository) {
         this.transactionRepository = transactionRepository;
-        this.connection = connection;
     }
 
 
     public List<HasDate> getAllHistory() {
         UUID userId = AuthenticatedAccountContext.getAuthenticatedUserId();
-        try{
-            List<HasDate> transactions = this.transactionRepository.queryAllTransactions(userId, connection);
+        try(Connection connection = Database.getConnection()){
+            List<HasDate> transactions = this.transactionRepository
+                    .queryAllTransactions(userId, connection);
             if(transactions.isEmpty()){
                 throw new NoTransactionsException(String.valueOf(userId));
             }
@@ -52,7 +52,7 @@ public class HistoryService {
 
     public List<HasDate> getRangeHistory(Instant startInstant, Instant endInstant){
         UUID userId = AuthenticatedAccountContext.getAuthenticatedUserId();
-        try{
+        try(Connection connection = Database.getConnection()){
             if(startInstant.isAfter(endInstant)){
                 throw new IllegalArgumentException("Starting Date must be before End Date.");
             }
