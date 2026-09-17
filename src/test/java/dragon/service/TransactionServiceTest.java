@@ -14,9 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -133,7 +131,7 @@ public class TransactionServiceTest {
     @Test
     void withdrawPositive() throws SQLException {
         // Valid withdrawal of $50
-        boolean result = transactionService.withdraw(50,"1");
+        boolean result = transactionService.withdraw(50, "1");
 
         assertTrue(result);
         assertEquals(450.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
@@ -149,6 +147,4 @@ public class TransactionServiceTest {
         assertEquals(500.0, checkingAccountRepository.findByOwnerID(connection, userId).getBalance());
         assertEquals(0.0, savingAccountRepository.findByOwnerID(connection, userId).getBalance());
     }
-
-
 }
