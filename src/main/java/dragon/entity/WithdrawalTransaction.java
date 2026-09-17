@@ -54,6 +54,9 @@ public class WithdrawalTransaction implements HasDate{
 
     @Override
     public String toString() {
-        return String.format("Transaction type: Withdrawal, user ID: %s, amount: %.2f, date:%s", this.userId, this.amount, this.date);
+        return String.format("Withdrawal- user ID: %s, amount: %.2f, date:%s",
+                this.userId.toString().substring(32),
+                this.amount,
+                this.date.toString().substring(0,16));
     }
 }
