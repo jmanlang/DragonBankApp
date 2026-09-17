@@ -16,48 +16,51 @@ import java.util.List;
 import java.util.UUID;
 
 public class TransactionRepository {
-    public List<HasDate> queryAllTransactions(UUID accountNum, Connection connection) throws SQLException{
+    public List<HasDate> queryAllTransactions(UUID accountId, Connection connection) throws SQLException{
 
         List<HasDate> transactions = new ArrayList<>();
 
         String sqlDeposit = "SELECT * FROM DepositTransaction " +
-                "WHERE userId = ? " +
+                "WHERE accountId = ? " +
                 "ORDER BY date";
         try(PreparedStatement statementDeposit = connection.prepareStatement(sqlDeposit)){
-            statementDeposit.setString(1, String.valueOf(accountNum));
+            statementDeposit.setString(1, String.valueOf(accountId));
             ResultSet rsDeposit = statementDeposit.executeQuery();
             while(rsDeposit.next()){
                 DepositTransaction depositTransaction = new DepositTransaction(
                         UUID.fromString(rsDeposit.getString(1)),
                         UUID.fromString(rsDeposit.getString(2)),
                         rsDeposit.getDouble(3),
-                        Instant.parse(rsDeposit.getString(4)));
+                        Instant.parse(rsDeposit.getString(4)),
+                        UUID.fromString(rsDeposit.getString(5)));
                 transactions.add(depositTransaction);
             }
         }
 
 
         String sqlWithdrawal = "SELECT * FROM WithdrawalTransaction " +
-                "WHERE userId = ? " +
+                "WHERE accountId = ? " +
                 "ORDER BY DATE";
         try(PreparedStatement statementWithdrawal  = connection.prepareStatement(sqlWithdrawal )){
-            statementWithdrawal .setString(1, String.valueOf(accountNum));
+            statementWithdrawal .setString(1, String.valueOf(accountId));
             ResultSet rsWithdrawal = statementWithdrawal .executeQuery();
             while(rsWithdrawal.next()){
                 WithdrawalTransaction withdrawalTransaction = new WithdrawalTransaction(
                         UUID.fromString(rsWithdrawal.getString(1)),
                         UUID.fromString(rsWithdrawal.getString(2)),
                         rsWithdrawal.getDouble(3),
-                        Instant.parse(rsWithdrawal.getString(4)));
+                        Instant.parse(rsWithdrawal.getString(4)),
+                        UUID.fromString(rsWithdrawal.getString(5)));
                 transactions.add(withdrawalTransaction);
             }
         }
 
         String sqlTransfer = "SELECT * FROM TransferTransaction " +
-                "WHERE userId = ? " +
+                "WHERE fromAccount = ? OR toAccount = ?" +
                 "ORDER BY date";
         try(PreparedStatement statementTransfer = connection.prepareStatement(sqlTransfer)){
-            statementTransfer.setString(1, String.valueOf(accountNum));
+            statementTransfer.setString(1, String.valueOf(accountId));
+            statementTransfer.setString(2, String.valueOf(accountId));
             ResultSet rsTransfer= statementTransfer.executeQuery();
             while(rsTransfer.next()){
                 TransferTransaction transferTransaction = new TransferTransaction(
@@ -76,14 +79,14 @@ public class TransactionRepository {
         return transactions;
     }
 
-    public List<HasDate> queryRangeTransactions(UUID accountNum, Connection connection,Instant startDate, Instant endDate) throws SQLException{
+    public List<HasDate> queryRangeTransactions(UUID accountId, Connection connection,Instant startDate, Instant endDate) throws SQLException{
         List<HasDate> transactions = new ArrayList<>();
 
         String sqlDeposit = "SELECT * FROM DepositTransaction " +
                 "WHERE userId = ? AND date >= ? AND date <= ?" +
                 "ORDER BY date";
         try(PreparedStatement statementDeposit = connection.prepareStatement(sqlDeposit)){
-            statementDeposit.setString(1, String.valueOf(accountNum));
+            statementDeposit.setString(1, String.valueOf(accountId));
             statementDeposit.setString(2, String.valueOf(startDate));
             statementDeposit.setString(3, String.valueOf(endDate));
             ResultSet rsDeposit = statementDeposit.executeQuery();
@@ -92,7 +95,8 @@ public class TransactionRepository {
                         UUID.fromString(rsDeposit.getString(1)),
                         UUID.fromString(rsDeposit.getString(2)),
                         rsDeposit.getDouble(3),
-                        Instant.parse(rsDeposit.getString(4)));
+                        Instant.parse(rsDeposit.getString(4)),
+                        UUID.fromString(rsDeposit.getString(5)));
                 transactions.add(depositTransaction);
             }
         }
@@ -102,7 +106,7 @@ public class TransactionRepository {
                 "WHERE userId = ?  AND date >= ? AND date <= ?" +
                 "ORDER BY date";
         try(PreparedStatement statementWithdrawal  = connection.prepareStatement(sqlWithdrawal )){
-            statementWithdrawal .setString(1, String.valueOf(accountNum));
+            statementWithdrawal .setString(1, String.valueOf(accountId));
             statementWithdrawal.setString(2, String.valueOf(startDate));
             statementWithdrawal.setString(3, String.valueOf(endDate));
             ResultSet rsWithdrawal = statementWithdrawal .executeQuery();
@@ -111,7 +115,8 @@ public class TransactionRepository {
                         UUID.fromString(rsWithdrawal.getString(1)),
                         UUID.fromString(rsWithdrawal.getString(2)),
                         rsWithdrawal.getDouble(3),
-                        Instant.parse(rsWithdrawal.getString(4)));
+                        Instant.parse(rsWithdrawal.getString(4)),
+                        UUID.fromString(rsWithdrawal.getString(5)));
                 transactions.add(withdrawalTransaction);
             }
         }
@@ -120,7 +125,7 @@ public class TransactionRepository {
                 "WHERE userId = ?  AND date >= ? AND date <= ?" +
                 "ORDER BY date";
         try(PreparedStatement statementTransfer = connection.prepareStatement(sqlTransfer)){
-            statementTransfer.setString(1, String.valueOf(accountNum));
+            statementTransfer.setString(1, String.valueOf(accountId));
             statementTransfer.setString(2, String.valueOf(startDate));
             statementTransfer.setString(3, String.valueOf(endDate));
             ResultSet rsTransfer= statementTransfer.executeQuery();

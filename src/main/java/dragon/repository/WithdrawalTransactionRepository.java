@@ -8,13 +8,14 @@ import java.sql.SQLException;
 
 public class WithdrawalTransactionRepository {
     public void save(Connection connection, WithdrawalTransaction transaction) throws SQLException {
-        String sql = "INSERT INTO WithdrawalTransaction (id, userId, amount, date) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO WithdrawalTransaction (id, userId, amount, date, accountId) VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, transaction.getId().toString());
             statement.setString(2, transaction.getUserId().toString());
             statement.setDouble(3, transaction.getAmount());
             statement.setString(4, transaction.getDate().toString());
+            statement.setString(5, transaction.getAccountId().toString());
             statement.executeUpdate();
         }
     }

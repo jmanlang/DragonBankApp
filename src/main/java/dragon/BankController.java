@@ -204,10 +204,11 @@ public class BankController {
 
     private void printHistoryManagementMenu(){
         System.out.println("What transactions would you like to print: ");
-        System.out.println("1. Print all transactions");
-        System.out.println("2. Print all transactions from custom range of dates");
-        System.out.println("3. Return to main menu");
-        System.out.println("4. Exit");
+        System.out.println("1. Print all checking account transactions");
+        System.out.println("2. Print all savings account transactions");
+        System.out.println("3. Print all transactions from custom range of dates");
+        System.out.println("4. Return to main menu");
+        System.out.println("5. Exit");
     }
 
     private boolean handleHistoryManagementMenu(){
@@ -215,30 +216,42 @@ public class BankController {
         boolean quickExit = false;
         while(!returnToMainMenu){
             printHistoryManagementMenu();
-            int choice = Integer.parseInt(sc.nextLine());
-            if(choice == 1){
-                List<HasDate> transactions = historyService.getAllHistory();
-                if(transactions != null){
-                    printTransactions(transactions);
-                }else{
-                    System.out.println("There was a problem printing your transaction history or you have no history, try again later.");
+            String choice = sc.nextLine().trim();
+            switch (choice) {
+                case "1" -> {
+                    List<HasDate> transactions = historyService.getAllHistory("1");
+                    if (transactions != null) {
+                        printTransactions(transactions);
+                    } else {
+                        System.out.println("There was a problem printing your transaction history or you have no history, try again later.");
+                    }
                 }
-            }else if (choice == 2) {
-                List<HasDate> transactions = chooseDatesMenu();
-                if(transactions != null){
-                    printTransactions(transactions);
-                } else{
-                    System.out.println("There was a problem printing your transaction history or you have no history between those dates, try again later.");
+                case "2" -> {
+                    List<HasDate> transactions = historyService.getAllHistory("1");
+                    if (transactions != null) {
+                        printTransactions(transactions);
+                    } else {
+                        System.out.println("There was a problem printing your transaction history or you have no history, try again later.");
+                    }
                 }
-            } else if (choice == 3) {
-                System.out.println("Returning to Main Menu");
-                returnToMainMenu = true;
-            } else if (choice == 4){
-                System.out.println("Exiting Bank Application.");
-                returnToMainMenu = true;
-                quickExit = true;
-            }else {
-                System.out.println("Invalid Input, try again");
+                case "3" -> {
+                    List<HasDate> transactions = chooseDatesMenu();
+                    if (transactions != null) {
+                        printTransactions(transactions);
+                    } else {
+                        System.out.println("There was a problem printing your transaction history or you have no history between those dates, try again later.");
+                    }
+                }
+                case "4" -> {
+                    System.out.println("Returning to Main Menu");
+                    returnToMainMenu = true;
+                }
+                case "5" -> {
+                    System.out.println("Exiting Bank Application.");
+                    returnToMainMenu = true;
+                    quickExit = true;
+                }
+                default -> System.out.println("Invalid Input, try again");
             }
         }
         return quickExit;

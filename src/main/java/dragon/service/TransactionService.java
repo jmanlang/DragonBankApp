@@ -76,7 +76,7 @@ public class TransactionService {
                         break;
                 }
 
-                depositTransactionRepository.save(connection, new DepositTransaction(userId, amount));
+                depositTransactionRepository.save(connection, new DepositTransaction(userId, amount, account.getID()));
                 connection.commit();
                 logger.info("Deposit of {} completed for user {}.", amount, userId);
                 return true;
@@ -202,7 +202,7 @@ public class TransactionService {
                         break;
                 }
 
-                withdrawalTransactionRepository.save(connection, new WithdrawalTransaction(userId, amount));
+                withdrawalTransactionRepository.save(connection, new WithdrawalTransaction(userId, amount, account.getID()));
                 connection.commit();
                 logger.info("Withdrawal of {} completed for user {}.", amount, userId);
                 return true;

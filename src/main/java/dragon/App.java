@@ -14,10 +14,10 @@ public class App {
             Connection connection = Database.getConnection();
 
             TransactionRepository transactionRepository = new TransactionRepository();
-            HistoryService historyService = new HistoryService(transactionRepository);
             UserRepository userRepository = new UserRepository();
             CheckingAccountRepository checkingAccountRepository = new CheckingAccountRepository();
             SavingAccountRepository savingAccountRepository = new SavingAccountRepository();
+            HistoryService historyService = new HistoryService(transactionRepository, checkingAccountRepository, savingAccountRepository);
             BalanceService balanceService = new BalanceService(checkingAccountRepository, savingAccountRepository);
             AuthService authService = new AuthService(userRepository, checkingAccountRepository, savingAccountRepository);
             DepositTransactionRepository depositTransactionRepository = new DepositTransactionRepository();

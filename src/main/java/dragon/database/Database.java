@@ -39,7 +39,8 @@ public class Database {
                         id TEXT PRIMARY KEY,
                         userId TEXT NOT NULL REFERENCES User(id),
                         amount REAL NOT NULL CHECK (amount > 0),
-                        date TEXT NOT NULL
+                        date TEXT NOT NULL,
+                        accountId TEXT NOT NULL
                     )
                     """;
 
@@ -48,7 +49,8 @@ public class Database {
                         id TEXT PRIMARY KEY,
                         userId TEXT NOT NULL REFERENCES User(id),
                         amount REAL NOT NULL CHECK (amount > 0),
-                        date TEXT NOT NULL
+                        date TEXT NOT NULL,
+                        accountId TEXT NOT NULL
                     )
                     """;
 
@@ -61,6 +63,25 @@ public class Database {
                         amount REAL NOT NULL CHECK (amount > 0),
                         date TEXT NOT NULL
                     )
+                    """;
+
+    public static final String DELETE_USER = """
+                    DROP TABLE IF EXISTS User
+                    """;
+    public static final String DELETE_CHECKING_ACCOUNT = """
+                    DROP TABLE IF EXISTS Checking_Account
+                    """;
+    public static final String DELETE_SAVING_ACCOUNT = """
+                    DROP TABLE IF EXISTS SavingAccount
+                    """;
+    public static final String DELETE_DEPOSIT_TRANSACTION = """
+                    DROP TABLE IF EXISTS DepositTransaction
+                    """;
+    public static final String DELETE_WITHDRAWAL_TRANSACTION = """
+                    DROP TABLE IF EXISTS WithdrawalTransaction
+                    """;
+    public static final String DELETE_TRANSFER_TRANSACTION = """
+                    DROP TABLE IF EXISTS TransferTransaction
                     """;
 
     private Database() {
@@ -81,6 +102,13 @@ public class Database {
 
     public static void initialize() throws SQLException {
         try (Connection connection = getConnection(); Statement statement = connection.createStatement()) {
+//            statement.executeUpdate(DELETE_TRANSFER_TRANSACTION);
+//            statement.executeUpdate(DELETE_DEPOSIT_TRANSACTION);
+//            statement.executeUpdate(DELETE_WITHDRAWAL_TRANSACTION);
+//            statement.executeUpdate(DELETE_CHECKING_ACCOUNT);
+//            statement.executeUpdate(DELETE_SAVING_ACCOUNT);
+//            statement.executeUpdate(DELETE_USER);
+
             statement.executeUpdate(CREATE_USER);
             statement.executeUpdate(CREATE_CHECKING_ACCOUNT);
             statement.executeUpdate(CREATE_SAVING_ACCOUNT);
