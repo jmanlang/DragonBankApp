@@ -2,7 +2,7 @@ package dragon.entity;
 
 import java.util.UUID;
 
-public class CheckingAccount {
+public class CheckingAccount implements Account{
     private UUID id;
     private UUID owner;
     private double balance;
