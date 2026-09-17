@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- Human-readable console output for local development. -->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
+<!--    &lt;!&ndash; Human-readable console output for local development. &ndash;&gt;-->
+<!--    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">-->
+<!--        <encoder>-->
+<!--            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>-->
+<!--        </encoder>-->
+<!--    </appender>-->
 
     <!-- Persist logs to ./logs/bank.log and rotate them so the file does not grow forever. -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -31,7 +31,7 @@
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
+<!--        <appender-ref ref="CONSOLE"/>-->
         <appender-ref ref="ASYNC_FILE"/>
     </root>
 </configuration>
