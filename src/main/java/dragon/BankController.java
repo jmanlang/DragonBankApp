@@ -138,7 +138,7 @@ public class BankController {
                     exit = true;
                     break;
                 default:
-                    System.out.println("Invalid input. Please choose again.");
+                    System.out.println("Not a valid option. Please choose again.");
                     break;
             }
         }
@@ -177,7 +177,7 @@ public class BankController {
                     returnToMainMenu = true;
                     break;
                 default:
-                    System.out.println("Invalid input. please try again.");
+                    System.out.println("Not a valid option. Please choose again.");
                     break;
             }
         }
@@ -187,7 +187,7 @@ public class BankController {
     private void handleCheckingBalance() throws SQLException {
         Double checkingBalance = balanceService.getCheckingAccountBalance();
         if (checkingBalance == null) {
-            System.out.println("Checking balance is null.");
+            System.out.println("Checking account not found. Please try again.");
         } else {
             System.out.println("Checking balance is " + checkingBalance);
         }
@@ -196,7 +196,7 @@ public class BankController {
     private void handleSavingBalance() throws SQLException {
             Double savingBalance = balanceService.getSavingAccountBalance();
             if (savingBalance == null) {
-                System.out.println("Saving balance is null.");
+                System.out.println("Saving account not found. Please try again.");
             }  else {
                 System.out.println("Saving balance is " + savingBalance);
             }
@@ -369,9 +369,17 @@ public class BankController {
         System.out.println("1. Checking Account -> Savings Account");
         System.out.println("2. Savings Account -> Checkings Account");
 
+        int direction = -1;
+        while (direction != 1 && direction != 2) {
+            String input = sc.nextLine().trim();
+            if (input.equals("1") || input.equals("2")) {
+                direction = Integer.parseInt(input);
+            } else {
+                System.out.print("Please enter a valid operation: ");
+            }
+        }
+
         try {
-            int direction = sc.nextInt();
-            sc.nextLine();
             System.out.print("Enter transfer amount: $");
             double transferAmount = Double.parseDouble(sc.nextLine().trim());
             if (transactionService.transfer(transferAmount, direction)) {

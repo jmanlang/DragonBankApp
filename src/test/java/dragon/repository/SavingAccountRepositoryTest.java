@@ -1,6 +1,7 @@
 package dragon.repository;
 
 import dragon.entity.SavingAccount;
+import dragon.database.Database;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,13 +28,7 @@ class SavingAccountRepositoryTest {
     void setUp() throws SQLException {
         connection = DriverManager.getConnection("jdbc:sqlite::memory:");
         try (Statement statement = connection.createStatement()) {
-            statement.execute(
-                    "CREATE TABLE SavingAccount (" +
-                            "id TEXT PRIMARY KEY, " +
-                            "owner TEXT NOT NULL, " +
-                            "balance REAL NOT NULL DEFAULT 0, " +
-                            "interestRate REAL NOT NULL DEFAULT 0)"
-            );
+            statement.execute(Database.CREATE_SAVING_ACCOUNT);
         }
         repository = new SavingAccountRepository();
     }
@@ -54,9 +49,6 @@ class SavingAccountRepositoryTest {
 
     @Test
     void createThenFind_roundTripsCorrectly_includingInterestRate() throws SQLException {
-        // This is the case that catches the "interestRate not in SELECT list"
-        // bug found earlier - if that regresses, this test fails with a
-        // SQLException instead of a plain assertion failure.
         UUID accountId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         SavingAccount newAccount = new SavingAccount(accountId, userId, 500.0, 0.025);
@@ -71,8 +63,6 @@ class SavingAccountRepositoryTest {
         assertEquals(0.025, found.getInterestRate(), 0.0001);
     }
 
-    // --- createSavingAccount: negative test ---
-
     @Test
     void createSavingAccount_rejectsDuplicateAccountId() throws SQLException {
         UUID accountId = UUID.randomUUID();
@@ -86,12 +76,8 @@ class SavingAccountRepositoryTest {
                 "Inserting a second account with the same primary key id should fail");
     }
 
-    // --- updateSavingAccountBalance: positive + negative tests ---
-
     @Test
     void updateSavingAccountBalance_positive_actuallyChangesTheStoredValue() throws SQLException {
-        // Regression test for the earlier bug where the update method bound
-        // the account's stale in-memory balance instead of the new parameter.
         UUID accountId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         SavingAccount account = new SavingAccount(accountId, userId, 100.0, 0.01);
@@ -119,8 +105,6 @@ class SavingAccountRepositoryTest {
         assertEquals(100.0, found.getBalance(), 0.0001,
                 "Balance should be unchanged after a rejected update");
     }
-
-    // --- updateSavingAccountInterestRate: positive + negative tests ---
 
     @Test
     void updateSavingAccountInterestRate_positive_actuallyChangesTheStoredValue() throws SQLException {
