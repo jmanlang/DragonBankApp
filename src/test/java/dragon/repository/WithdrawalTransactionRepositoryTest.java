@@ -42,14 +42,16 @@ class WithdrawalTransactionRepositoryTest {
     void saveWithdrawalPositive() throws SQLException {
         // Valid withdrawal transaction
         UUID userId = UUID.randomUUID();
-        WithdrawalTransaction transaction = new WithdrawalTransaction(userId, 90.25);
+        UUID accountId = UUID.randomUUID();
+        WithdrawalTransaction transaction = new WithdrawalTransaction(userId, 90.25, accountId);
 
         repository.save(connection, transaction);
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(
-                "SELECT COUNT(*) FROM WithdrawalTransaction WHERE userId = ? AND amount = ?")) {
+                "SELECT COUNT(*) FROM WithdrawalTransaction WHERE userId = ? AND amount = ? AND accountId = ?")) {
             preparedStatement.setString(1, userId.toString());
             preparedStatement.setDouble(2, 90.25);
+            preparedStatement.setString(3, accountId.toString());
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 resultSet.next();
                 assertEquals(1, resultSet.getInt(1), "Expected one saved withdrawal record");
@@ -62,8 +64,9 @@ class WithdrawalTransactionRepositoryTest {
         // Withdrawal transaction w/ duplicate id
         UUID userId = UUID.randomUUID();
         UUID transactionId = UUID.randomUUID();
-        WithdrawalTransaction first = new WithdrawalTransaction(transactionId, userId, 60.00, java.time.Instant.now());
-        WithdrawalTransaction duplicate = new WithdrawalTransaction(transactionId, userId, 80.00, java.time.Instant.now());
+        UUID accountId = UUID.randomUUID();
+        WithdrawalTransaction first = new WithdrawalTransaction(transactionId, userId, 60.00, java.time.Instant.now(), accountId);
+        WithdrawalTransaction duplicate = new WithdrawalTransaction(transactionId, userId, 80.00, java.time.Instant.now(), accountId);
 
         repository.save(connection, first);
 

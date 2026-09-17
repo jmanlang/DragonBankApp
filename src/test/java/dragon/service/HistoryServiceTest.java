@@ -9,6 +9,8 @@ import java.util.UUID;
 
 import dragon.AuthenticatedAccountContext;
 import dragon.database.Database;
+import dragon.repository.CheckingAccountRepository;
+import dragon.repository.SavingAccountRepository;
 import dragon.repository.TransactionRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,24 +22,30 @@ public class HistoryServiceTest {
     HistoryService historyService;
     private static final String TEST_DB_URL = "jdbc:sqlite:file::memory:?cache=shared";
     private Connection connection;
+    private UUID userId;
+    private UUID fromAccountId;
+    private UUID toAccountId;
 
     @BeforeEach
     void setUp() throws SQLException {
         TransactionRepository transactionRepository = new TransactionRepository();
+        CheckingAccountRepository checkingAccountRepository = new CheckingAccountRepository();
+        SavingAccountRepository savingAccountRepository = new SavingAccountRepository();
         System.setProperty(Database.DATABASE_URL_PROPERTY, TEST_DB_URL);
         connection = DriverManager.getConnection(TEST_DB_URL);
-        historyService = new HistoryService(transactionRepository);
-        try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_TRANSFER_TRANSACTION)) {
-            statement.executeUpdate();
+        historyService = new HistoryService(transactionRepository, checkingAccountRepository, savingAccountRepository);
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(Database.CREATE_USER);
+            statement.executeUpdate(Database.CREATE_CHECKING_ACCOUNT);
+            statement.executeUpdate(Database.CREATE_SAVING_ACCOUNT);
+            statement.executeUpdate(Database.CREATE_TRANSFER_TRANSACTION);
+            statement.executeUpdate(Database.CREATE_DEPOSIT_TRANSACTION);
+            statement.executeUpdate(Database.CREATE_WITHDRAWAL_TRANSACTION);
         }
-        try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_DEPOSIT_TRANSACTION)) {
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement(Database.CREATE_WITHDRAWAL_TRANSACTION)) {
-            statement.executeUpdate();
-        }
-        UUID userId = UUID.randomUUID();
-        AuthenticatedAccountContext.setAuthenticatedUserId(userId);
+        this.userId = UUID.randomUUID();
+        this.fromAccountId = UUID.randomUUID();
+        this.toAccountId = UUID.randomUUID();
+        AuthenticatedAccountContext.setAuthenticatedUserId(this.userId);
     }
 
     @AfterEach
@@ -48,21 +56,42 @@ public class HistoryServiceTest {
     }
 
     void setupInsertTransaction() throws SQLException{
-        UUID userId = UUID.randomUUID();
-        AuthenticatedAccountContext.setAuthenticatedUserId(userId);
-        String userIdString = userId.toString();
-        String toAccountId = String.valueOf(UUID.randomUUID());
-        String fromAccountId = String.valueOf(UUID.randomUUID());
+        String userIdString = this.userId.toString();
+        System.out.println(userIdString);
+        String fromAccountIdString = this.fromAccountId.toString();
+        String toAccountIdString = this.toAccountId.toString();
         String transactionAccountId = String.valueOf(UUID.randomUUID());
         String date = String.valueOf(Instant.now());
         String sql = """
+                INSERT INTO CheckingAccount (id, balance, owner)
+                VALUES (?, ?, ?)""";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, fromAccountIdString);
+            statement.setDouble(2, 0);
+            statement.setString(3, userIdString);
+            statement.executeUpdate();
+        }
+
+        String sql2 = """
+                INSERT INTO SavingAccount (id, balance, owner)
+                VALUES (?, ?, ?)""";
+
+        try (PreparedStatement statement = connection.prepareStatement(sql2)) {
+            statement.setString(1, toAccountIdString);
+            statement.setDouble(2, 0);
+            statement.setString(3, userIdString);
+            statement.executeUpdate();
+        }
+
+        String sql3 = """
                 INSERT INTO TransferTransaction (id, userId, fromAccount, toAccount, amount, date)
                 VALUES (?, ?, ?, ?, ?, ?)""";
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = connection.prepareStatement(sql3)) {
             statement.setString(1, transactionAccountId);
             statement.setString(2, userIdString);
-            statement.setString(3, fromAccountId);
-            statement.setString(4, toAccountId);
+            statement.setString(3, fromAccountIdString);
+            statement.setString(4, toAccountIdString);
             statement.setDouble(5, 1000);
             statement.setString(6, date);
             statement.executeUpdate();
@@ -87,12 +116,12 @@ public class HistoryServiceTest {
     @Test
     void testGetAllHistoryPositive() throws SQLException{
         setupInsertTransaction();
-        assertNotNull(historyService.getAllHistory());
+        assertNotNull(historyService.getAllHistory("1"));
     }
 
     @Test
     void testGetAllHistoryNoTransactions(){
-        assertNull(historyService.getAllHistory());
+        assertNull(historyService.getAllHistory("1"));
     }
 
     @Test

@@ -227,7 +227,7 @@ public class BankController {
                     }
                 }
                 case "2" -> {
-                    List<HasDate> transactions = historyService.getAllHistory("1");
+                    List<HasDate> transactions = historyService.getAllHistory("2");
                     if (transactions != null) {
                         printTransactions(transactions);
                     } else {

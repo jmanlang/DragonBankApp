@@ -42,14 +42,16 @@ class DepositTransactionRepositoryTest {
     void saveDepositPositive() throws SQLException {
         // Valid Deposit Transaction
         UUID userId = UUID.randomUUID();
-        DepositTransaction transaction = new DepositTransaction(userId, 125.50);
+        UUID accountId = UUID.randomUUID();
+        DepositTransaction transaction = new DepositTransaction(userId, 125.50, accountId);
 
         repository.save(connection, transaction);
 
         try (PreparedStatement preparedStatement = connection.prepareStatement(
-                "SELECT COUNT(*) FROM DepositTransaction WHERE userId = ? AND amount = ?")) {
+                "SELECT COUNT(*) FROM DepositTransaction WHERE userId = ? AND amount = ? AND accountId = ?")) {
             preparedStatement.setString(1, userId.toString());
             preparedStatement.setDouble(2, 125.50);
+            preparedStatement.setString(3, accountId.toString());
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 resultSet.next();
                 assertEquals(1, resultSet.getInt(1), "Expected one saved deposit record");
@@ -62,8 +64,9 @@ class DepositTransactionRepositoryTest {
         // Deposit Transaction w/ duplicate id
         UUID userId = UUID.randomUUID();
         UUID transactionId = UUID.randomUUID();
-        DepositTransaction first = new DepositTransaction(transactionId, userId, 50.00, java.time.Instant.now());
-        DepositTransaction duplicate = new DepositTransaction(transactionId, userId, 75.00, java.time.Instant.now());
+        UUID accountId = UUID.randomUUID();
+        DepositTransaction first = new DepositTransaction(transactionId, userId, 50.00, java.time.Instant.now(), accountId);
+        DepositTransaction duplicate = new DepositTransaction(transactionId, userId, 75.00, java.time.Instant.now(), accountId);
 
         repository.save(connection, first);
 

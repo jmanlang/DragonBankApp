@@ -79,14 +79,14 @@ public class TransactionRepository {
         return transactions;
     }
 
-    public List<HasDate> queryRangeTransactions(UUID accountId, Connection connection,Instant startDate, Instant endDate) throws SQLException{
+    public List<HasDate> queryRangeTransactions(UUID userId, Connection connection,Instant startDate, Instant endDate) throws SQLException{
         List<HasDate> transactions = new ArrayList<>();
 
         String sqlDeposit = "SELECT * FROM DepositTransaction " +
                 "WHERE userId = ? AND date >= ? AND date <= ?" +
                 "ORDER BY date";
         try(PreparedStatement statementDeposit = connection.prepareStatement(sqlDeposit)){
-            statementDeposit.setString(1, String.valueOf(accountId));
+            statementDeposit.setString(1, String.valueOf(userId));
             statementDeposit.setString(2, String.valueOf(startDate));
             statementDeposit.setString(3, String.valueOf(endDate));
             ResultSet rsDeposit = statementDeposit.executeQuery();
@@ -106,7 +106,7 @@ public class TransactionRepository {
                 "WHERE userId = ?  AND date >= ? AND date <= ?" +
                 "ORDER BY date";
         try(PreparedStatement statementWithdrawal  = connection.prepareStatement(sqlWithdrawal )){
-            statementWithdrawal .setString(1, String.valueOf(accountId));
+            statementWithdrawal .setString(1, String.valueOf(userId));
             statementWithdrawal.setString(2, String.valueOf(startDate));
             statementWithdrawal.setString(3, String.valueOf(endDate));
             ResultSet rsWithdrawal = statementWithdrawal .executeQuery();
@@ -125,7 +125,7 @@ public class TransactionRepository {
                 "WHERE userId = ?  AND date >= ? AND date <= ?" +
                 "ORDER BY date";
         try(PreparedStatement statementTransfer = connection.prepareStatement(sqlTransfer)){
-            statementTransfer.setString(1, String.valueOf(accountId));
+            statementTransfer.setString(1, String.valueOf(userId));
             statementTransfer.setString(2, String.valueOf(startDate));
             statementTransfer.setString(3, String.valueOf(endDate));
             ResultSet rsTransfer= statementTransfer.executeQuery();
