@@ -1,6 +1,8 @@
 package dragon.entity;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class TransferTransaction implements HasDate {
@@ -75,6 +77,19 @@ public class TransferTransaction implements HasDate {
     }
 
     public String toString() {
-        return String.format("Transaction type: Transfer,   user ID: %s, from Account ID:%s, to Account ID: %s, amount: %.2f, date:%s", this.userId, this.fromAccount, this.toAccount, this.amount, this.date);
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern("MMM dd yyyy hh:mma")
+                .withZone(ZoneId.systemDefault());
+        int userLength = this.userId.toString().length();
+        String shortenedUserId = this.userId.toString().substring(userLength - 4);
+
+        int fromAccountLength = this.fromAccount.toString().length();
+        String shortenedfromAccount = this.fromAccount.toString().substring(fromAccountLength - 4);
+
+        int toAccountLength = this.toAccount.toString().length();
+        String shortenedtoAccount = this.toAccount.toString().substring(toAccountLength - 4);
+
+
+        return String.format("Transfer:   %s - Amount: $%,-15.2f - User ID: ****%s - from Account ID: ****%s - to Account ID: ****%s", formatter.format(this.date), this.amount, shortenedUserId, shortenedfromAccount, shortenedtoAccount);
     }
 }

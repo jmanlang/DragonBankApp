@@ -1,6 +1,8 @@
 package dragon.entity;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class WithdrawalTransaction implements HasDate{
@@ -54,6 +56,11 @@ public class WithdrawalTransaction implements HasDate{
 
     @Override
     public String toString() {
-        return String.format("Transaction type: Withdrawal, user ID: %s, amount: %.2f, date:%s", this.userId, this.amount, this.date);
+        DateTimeFormatter formatter = DateTimeFormatter
+                .ofPattern("MMM dd yyyy hh:mma")
+                .withZone(ZoneId.systemDefault());
+        int length = this.userId.toString().length();
+        String shortenedUserId = this.userId.toString().substring(length - 4);
+        return String.format("Withdrawal: %s - Amount: $%,-15.2f - User ID: ****%s", formatter.format(this.date), this.amount, shortenedUserId);
     }
 }
