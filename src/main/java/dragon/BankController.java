@@ -147,8 +147,8 @@ public class BankController {
     private void printBalanceManagementMenu() {
         // included both checking and savings, but can rewrite for a singular balance
         System.out.println("Select an option:");
-        System.out.println("1. Check the balance in your savings account.");
-        System.out.println("2. Check the balance in your checking account.");
+        System.out.println("1. Check the balance in your checking account.");
+        System.out.println("2. Check the balance in your saving account.");
         System.out.println("3. Return to main menu.");
         System.out.println("4. Exit.");
     }
@@ -162,10 +162,10 @@ public class BankController {
             String input = sc.nextLine().trim();
             switch (input) {
                 case "1":
-                    handleSavingBalance();
+                    handleCheckingBalance();
                     break;
                 case "2":
-                    handleCheckingBalance();
+                    handleSavingBalance();
                     break;
                 case "3":
                     System.out.println("Returning to main menu...");
@@ -189,7 +189,7 @@ public class BankController {
         if (checkingBalance == null) {
             System.out.println("Checking account not found. Please try again.");
         } else {
-            System.out.println("Checking balance is " + checkingBalance);
+            System.out.println(String.format("Checking balance is $%,.2f", checkingBalance));
         }
     }
 
@@ -198,7 +198,7 @@ public class BankController {
             if (savingBalance == null) {
                 System.out.println("Saving account not found. Please try again.");
             }  else {
-                System.out.println("Saving balance is " + savingBalance);
+                System.out.println(String.format("Saving balance is $%,.2f", savingBalance));
             }
     }
 
@@ -249,7 +249,7 @@ public class BankController {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         ZoneId zoneId = ZoneId.systemDefault();
         String startDateString = "", endDateString = " ";
-        System.out.println("Enter start date(YYYY-MM-DD):");
+        System.out.println("Enter start date (YYYY-MM-DD):");
         LocalDate startDate = null, endDate = null;
         Instant startInstant = null, endInstant = null;
         try {
@@ -261,7 +261,7 @@ public class BankController {
             System.out.println("Invalid input: not a date");
             return null;
         }
-        System.out.println("Enter end date(YYYY-MM-DD):");
+        System.out.println("Enter end date (YYYY-MM-DD):");
         try {
             endDateString = sc.nextLine();
             endDate = LocalDate.parse(endDateString, dateFormatter);
@@ -322,7 +322,12 @@ public class BankController {
         System.out.println("Which account would you like to withdraw from?");
         System.out.println("1. Checking Account");
         System.out.println("2. Savings Account");
+        System.out.println("3. Cancel");
         String accountType = sc.nextLine().trim();
+        if (accountType.equals("3")) {
+            return;
+        }
+
         if(!(accountType.equals("1") || accountType.equals("2"))){
             System.out.println("Invalid choice.");
             return;
@@ -345,7 +350,12 @@ public class BankController {
         System.out.println("Which account would you like to deposit into?");
         System.out.println("1. Checking Account");
         System.out.println("2. Savings Account");
+        System.out.println("3. Cancel");
         String accountType = sc.nextLine().trim();
+        if (accountType.equals("3")) {
+            return;
+        }
+
         if(!(accountType.equals("1") || accountType.equals("2"))){
             System.out.println("Invalid choice.");
             return;
@@ -367,13 +377,16 @@ public class BankController {
     private void handleTransfer() {
         System.out.println("How would you like to perform the transfer?");
         System.out.println("1. Checking Account -> Savings Account");
-        System.out.println("2. Savings Account -> Checkings Account");
+        System.out.println("2. Savings Account -> Checking Account");
+        System.out.println("3. Cancel");
 
         int direction = -1;
         while (direction != 1 && direction != 2) {
             String input = sc.nextLine().trim();
             if (input.equals("1") || input.equals("2")) {
                 direction = Integer.parseInt(input);
+            } else if (input.equals("3")) {
+                return;
             } else {
                 System.out.print("Please enter a valid operation: ");
             }
