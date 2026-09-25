@@ -5,13 +5,10 @@ import dragon.repository.*;
 import dragon.service.*;
 import java.sql.SQLException;
 
-import java.sql.Connection;
-
 public class App {
     public static void main(String[] args) {
         try {
             Database.initialize();
-            Connection connection = Database.getConnection();
 
             TransactionRepository transactionRepository = new TransactionRepository();
             HistoryService historyService = new HistoryService(transactionRepository);
